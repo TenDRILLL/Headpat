@@ -1,0 +1,93 @@
+<html>
+<head>
+    <link href="/resource/login.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+<body>
+<%- include("./navbar"); %>
+<div id="snackbar"></div>
+<div id="overlay"></div>
+<section class="text-center text-lg-start">
+    <div class="container py-4">
+        <div class="row g-0 align-items-center">
+            <div class="col-lg-6 mb-5 mb-lg-0">
+                <div class="card cascading-right" style="
+            background: hsl(0deg 0% 18.26% / 55%);
+            backdrop-filter: blur(40px);
+            ">
+                    <div class="card-body p-5 shadow-5 text-center">
+                        <h2 class="fw-bold mb-5">Login to Headpat</h2>
+                        <form action="/login" method="post">
+                            <div class="form-outline mb-4">
+                                <input type="email" id="email" class="form-control" />
+                                <label class="form-label" for="email">Email address</label>
+                            </div>
+                            <div class="form-outline mb-4">
+                                <input type="password" id="password" class="form-control" />
+                                <label class="form-label" for="password">Password</label>
+                            </div>
+                            <div class="form-check d-flex justify-content-center mb-4">
+                                <input class="form-check-input me-2" type="checkbox" value="" id="remember" checked />
+                                <label class="form-check-label" for="remember">
+                                    Remember Me
+                                </label>
+                            </div>
+                            <button type="button" id="login" class="btn btn-primary btn-block mb-4">
+                                Login
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-5 mb-lg-0">
+                <img src="/resource/banner.png" class="w-100 rounded-4 shadow-4"
+                     style="border-radius: 10%;"
+                     alt="" />
+            </div>
+        </div>
+    </div>
+</section>
+<div id="tfa-popup">
+    <br>
+    <div class="row">
+        <div class="col-lg-5 col-md-7 mx-auto my-auto">
+            <div class="card">
+                <div class="card-body px-lg-5 py-lg-5 text-center">
+                    <img src="/resource/2fa.png" class="avatar-lg mb-4" alt="2fa-lock">
+                    <h2 class="text-info">Security Check</h2>
+                    <p class="mb-4">Please enter your 2FA code >w<</p>
+                    <form>
+                        <div class="row mb-4">
+                            <div class="col-lg-2 col-md-2 col-2 ps-0">
+                                <input type="text" class="form-controls text-lg text-center" id="tfa1" placeholder="_" aria-label="2fa" maxlength="1">
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-2 ps-0">
+                                <input type="text" class="form-controls text-lg text-center" id="tfa2" placeholder="_" aria-label="2fa" maxlength="1">
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-2 ps-0">
+                                <input type="text" class="form-controls text-lg text-center" id="tfa3" placeholder="_" aria-label="2fa" maxlength="1">
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-2 pe-0">
+                                <input type="text" class="form-controls text-lg text-center" id="tfa4" placeholder="_" aria-label="2fa" maxlength="1">
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-2 pe-0">
+                                <input type="text" class="form-controls text-lg text-center" id="tfa5" placeholder="_" aria-label="2fa" maxlength="1">
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-2 pe-0">
+                                <input type="text" class="form-controls text-lg text-center" id="tfa6" placeholder="_" aria-label="2fa" maxlength="1">
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <button type="button" class="btn btn-lg my-4" id="tfalogin">Login</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/resource/login.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+</body>
+</html>

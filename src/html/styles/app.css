@@ -1,0 +1,95 @@
+html body {
+    color: rgb(209, 205, 199);
+    background-color: #36393F !important;
+    -webkit-tap-highlight-color: transparent;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar {
+    background-color: #202325 !important;
+    color: rgb(209, 205, 199);
+}
+
+.callout {
+    padding: 1.25rem;
+    border: 1px solid #e9ecef;
+    border-left-width: 0.25rem;
+    border-radius: 0.25rem;
+}
+
+.callout-danger {
+    color: rgba(255, 255, 255, 1);
+    background-color: rgba(67, 12, 17, 0.9);
+    border-color: rgba(106, 17, 26, 0.9);
+    position: absolute;
+    width: 100%;
+}
+
+#close-danger {
+    float: right;
+}
+
+#container {
+    display: flex;
+    height: 86%;
+}
+
+#servers {
+    background-color: #2A2C31;
+}
+
+#channels {
+    flex: 1;
+    background-color: #36393F;
+    color: #FFFFFF;
+    padding: 10px;
+}
+
+#messages {
+    display: flex;
+    flex: 3;
+    flex-direction: column-reverse;
+    background-color: #2F3136;
+    color: #FFFFFF;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+#user-list {
+    flex: 1;
+    background-color: #36393F;
+    color: #FFFFFF;
+    padding: 10px;
+}
+
+.channel {
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.message {
+    margin-bottom: 10px;
+}
+
+.user {
+    margin-bottom: 5px;
+}
+
+.text-input {
+    width: calc(60% - 125px);
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #40444B;
+    color: #FFFFFF;
+    margin: 10px;
+    outline: none;
+    box-sizing: border-box;
+    bottom: 10px;
+    position: absolute;
+}
+
+.OFFLINE {
+    color: #808080 !important;
+}

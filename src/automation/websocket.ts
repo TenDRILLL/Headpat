@@ -1,0 +1,186 @@
+import {WebSocketServer, WebSocket} from "ws";
+import {jwtVerify} from "jose";
+import {readDatabase, writeDatabase} from "./database";
+import Auth from "../structs/Auth";
+import User from "../structs/User";
+import Server from "../structs/Server";
+import {getUser} from "./usermanager";
+import Message from "../structs/Message";
+import Channel from "../structs/Channel";
+
+let server;
+
+const init = ()=>{
+    server = new WebSocketServer({
+        port: 5001,
+        perMessageDeflate: false
+    });
+
+    const connections = new Map();
+
+    server.on("connection", (ws, req)=>{
+        ws.on("error", console.error);
+        ws.on("message", (data)=>{
+            if(!ws.tid) return;
+            try {
+                data = JSON.parse(data.toString());
+            } catch(e) {
+                return;
+            }
+
+            const obj = connections.get(ws.tid);
+            if(!obj){
+                console.log(`${ws.tid} closing WS`);
+                return ws.close();
+            }
+
+            switch(data.opCode){
+                case "HRT":
+                    heartbeat(ws);
+                    break;
+                case "MSG":
+                    const msg: Message = {
+                        ID: "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c => (parseInt(c) ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> parseInt(c) / 4).toString(16)),
+                        createdAt: Date.now().toString(),
+                        content: data.data.content,
+                        userID: ws.tid,
+                        channelID: ws.currentChannel,
+                        serverID: ws.currentServer
+                    };
+                    sendMessage(msg).catch(e => {
+                        ws.send(JSON.stringify({
+                            opCode: "MSG",
+                            error: e
+                        }));
+                    });
+                    break;
+            }
+        });
+
+        let auth = "";
+        req.rawHeaders.forEach(x => {
+            if(x.split("auth=").length > 1){
+                auth = x.split("auth=")[1].split(";")[0];
+            }
+        });
+        if(auth.length < 1) return ws.close();
+
+        jwtVerify(auth, new TextEncoder().encode(process.env.JWT_SECRET as string ?? "COOLSECRET")).then(async jwtData => {
+            const payload = jwtData.payload;
+            if(payload.iss !== "urn:Headpat:axiom" || payload.aud !== "urn:Headpat:users") return ws.close();
+            ws.tid = payload.id;
+            ws.tses = payload.session;
+            ws.currentServer = "0";
+            ws.currentChannel = "0";
+            connections.set(payload.id,{
+                id: payload.id,
+                session: payload.session,
+                heartbeat: Date.now()
+            });
+            const user = await getUser(ws.tid);
+            const channel = await readDatabase("channels",ws.currentChannel) as Channel;
+            const server = await readDatabase("servers",ws.currentServer) as Server;
+            const messagePromises: Promise<Message>[] = [];
+            let messages: Message[];
+            channel.messages.forEach(messageID => {
+                messagePromises.push(readDatabase("messages", messageID) as Promise<Message>);
+            });
+            messages = await Promise.all(messagePromises);
+            const userList = server.members.map(x => ({ID: x, online: connections.has(x) ? "ONLINE" : "OFFLINE"}));
+            ws.send(JSON.stringify({
+                opCode: "ACK",
+                data: {
+                    user,
+                    messages,
+                    userList
+                }
+            }));
+        }).catch(() => ws.close());
+    });
+
+    async function heartbeat(ws){
+        //console.log(`${ws.tid} is still alive!`);
+        const a = connections.get(ws.tid);
+        a.heartbeat = Date.now();
+        connections.set(ws.tid,a);
+        const user = await getUser(ws.tid);
+        const channel = await readDatabase("channels",ws.currentChannel) as Channel;
+        const server = await readDatabase("servers",ws.currentServer) as Server;
+        const messagePromises: Promise<Message>[] = [];
+        let messages: Message[];
+        channel.messages.forEach(messageID => {
+            messagePromises.push(readDatabase("messages", messageID) as Promise<Message>);
+        });
+        messages = await Promise.all(messagePromises);
+        const userList = server.members.map(x => ({ID: x, online: connections.has(x) ? "ONLINE" : "OFFLINE"}));
+        ws.send(JSON.stringify({
+            opCode: "HRT",
+            data: {
+                user,
+                messages,
+                userList
+            }
+        }));
+    }
+
+    setInterval(()=>{
+        connections.forEach(async x => {
+            const inspect = await readDatabase("auth",x.id) as Auth;
+            if(x.session !== inspect.sessionSecret || Date.now() - x.heartbeat > 1000*15){
+                connections.delete(x.id);
+                console.log(`${x.id} lost connection.`);
+            }
+        });
+    }, 30*1000);
+}
+
+async function sendMessage(message: Message){
+    return new Promise(async (res, rej)=>{
+        const author = await readDatabase("users",message.userID) as User;
+        if(!author) rej("NO_USER");
+        if(message.serverID){
+            const server = await readDatabase("servers",message.serverID) as Server;
+            if(!server) rej("NO_SERVER");
+            if(!server.members.includes(author.ID)) rej("NOT_MEMBER");
+            if(!server.channels.includes(message.channelID)) rej("NO_CHANNEL");
+            const channel: Channel = await readDatabase("channels", message.channelID) as Channel;
+            if(channel["messages"] === undefined) channel["messages"] = [];
+            channel.messages.push(message.ID);
+            await writeDatabase("messages", message.ID, message);
+            await writeDatabase("channels", message.channelID, channel);
+        } else {
+            const recipient = await readDatabase("users", message.channelID) as User;
+            if(!recipient) rej("NO_RECIPIENT");
+            await writeDatabase("messages", message.ID, message);
+            const recipientWebsocket = server.clients.find(x => x.tid === message.channelID);
+            recipientWebsocket.send(JSON.stringify({
+                opCode: "MSG",
+                data: message
+            }));
+            return res(true);
+        }
+
+        const queue: Promise<boolean>[] = [];
+        server.clients.forEach(x => {
+            queue.push(new Promise(async res => {
+                if(x.readyState === WebSocket.OPEN){
+                    const user = await readDatabase("users",x.tid) as User;
+                    if(!user) return res(false);
+                    if(user.servers.includes(message.serverID)){
+                        x.send(JSON.stringify({
+                            opCode: "MSG",
+                            data: message
+                        }));
+                        res(true);
+                    }
+                }
+            }));
+        });
+        Promise.all(queue).then(()=>res(true));
+    });
+}
+
+export {
+    init,
+    sendMessage
+}
