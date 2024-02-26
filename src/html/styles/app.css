@@ -93,3 +93,20 @@ html body {
 .OFFLINE {
     color: #808080 !important;
 }
+
+menu {
+    position:absolute;
+    display:block;
+    left:0px;
+    top:0px;
+    padding:0;
+    margin:0;
+    border:1px solid;
+    font-weight:normal;
+    white-space:nowrap;
+    background-color: #494949;
+}
+menu:hover{
+    background-color: #7e7e7e;
+    cursor: pointer;
+}

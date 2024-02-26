@@ -6,6 +6,11 @@ const registerRouter = Router();
 
 registerRouter.get("/", (req, res)=>{
     if(req.cookies.auth) return res.redirect("/app");
+    res.render("noregister.ejs", {});
+});
+
+registerRouter.get("/hax", (req, res)=>{
+    if(req.cookies.auth) return res.redirect("/app");
     res.render("register.ejs", {});
 });
 

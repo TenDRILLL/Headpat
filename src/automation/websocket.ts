@@ -1,6 +1,6 @@
 import {WebSocketServer, WebSocket} from "ws";
 import {jwtVerify} from "jose";
-import {readDatabase, writeDatabase} from "./database";
+import {readDatabase, removeDatabase, writeDatabase} from "./database";
 import Auth from "../structs/Auth";
 import User from "../structs/User";
 import Server from "../structs/Server";
@@ -20,10 +20,10 @@ const init = ()=>{
 
     server.on("connection", (ws, req)=>{
         ws.on("error", console.error);
-        ws.on("message", (data)=>{
+        ws.on("message", (event)=>{
             if(!ws.tid) return;
             try {
-                data = JSON.parse(data.toString());
+                event = JSON.parse(event.toString());
             } catch(e) {
                 return;
             }
@@ -34,7 +34,7 @@ const init = ()=>{
                 return ws.close();
             }
 
-            switch(data.opCode){
+            switch(event.opCode){
                 case "HRT":
                     heartbeat(ws);
                     break;
@@ -42,7 +42,7 @@ const init = ()=>{
                     const msg: Message = {
                         ID: "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c => (parseInt(c) ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> parseInt(c) / 4).toString(16)),
                         createdAt: Date.now().toString(),
-                        content: data.data.content,
+                        content: event.data.content,
                         userID: ws.tid,
                         channelID: ws.currentChannel,
                         serverID: ws.currentServer
@@ -54,6 +54,58 @@ const init = ()=>{
                         }));
                     });
                     break;
+                case "DEL_MSG":
+                    readDatabase("messages", event.data.messageID).then((message: Message) => {
+                        if(
+                            message.serverID === ws.currentServer &&
+                            message.channelID === ws.currentChannel &&
+                            message.userID === ws.tid
+                        ){
+                            removeDatabase("messages",event.data.messageID).then(()=>{
+                                readDatabase("channels", message.channelID).then((channel: Channel) => {
+                                    const idx = channel.messages.indexOf(event.data.messageID);
+                                    if(idx > -1) channel.messages.splice(idx,1);
+                                    writeDatabase("channels",message.channelID,channel).then(()=>{
+                                        server.clients.forEach(x => {
+                                            if(x.readyState === WebSocket.OPEN && x.currentChannel === ws.currentChannel){
+                                                x.send(JSON.stringify({
+                                                    opCode: "DEL_MSG",
+                                                    data: {
+                                                        messageID: event.data.messageID
+                                                    }
+                                                }));
+                                            }
+                                        });
+                                    }).catch(()=>{
+                                        ws.send(JSON.stringify({
+                                            opCode: "DEL_MSG",
+                                            error: "Channel not found."
+                                        }));
+                                    });
+                                }).catch(()=>{
+                                    ws.send(JSON.stringify({
+                                        opCode: "DEL_MSG",
+                                        error: "Channel not found."
+                                    }));
+                                });
+                            }).catch(()=>{
+                                ws.send(JSON.stringify({
+                                    opCode: "DEL_MSG",
+                                    error: "Message not found."
+                                }));
+                            });
+                        } else {
+                            ws.send(JSON.stringify({
+                                opCode: "DEL_MSG",
+                                error: "Message data not a match."
+                            }));
+                        }
+                    }).catch(()=>{
+                        ws.send(JSON.stringify({
+                            opCode: "DEL_MSG",
+                            error: "Message data not a match."
+                        }));
+                    });
             }
         });
 

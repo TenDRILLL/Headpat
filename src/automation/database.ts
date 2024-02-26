@@ -45,6 +45,18 @@ const readDatabase = (db, id)=>{
     });
 }
 
+const removeDatabase = (db, id) => {
+    return new Promise((res, rej)=>{
+        if(dbs[db] !== null && Object.keys(dbs).includes(db)){
+            dbs[db]!.delete(id).then(()=>{
+                res(true);
+            });
+        } else {
+            rej("NO_DATABASE");
+        }
+    });
+}
+
 const getAuth = (email): Promise<Auth|null> => {
     return new Promise(async (res, rej)=>{
         if(dbs["auth"] === null) return rej("NO_DATABASE");
@@ -59,5 +71,6 @@ export {
     initDatabase,
     writeDatabase,
     readDatabase,
+    removeDatabase,
     getAuth
 }

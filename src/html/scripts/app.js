@@ -1,4 +1,4 @@
-let ws = new WebSocket("ws://localhost:5001");
+let ws = new WebSocket("ws://192.168.0.158:5001");
 const heart = setInterval(sendHeartbeat, 5000);
 let recon;
 
@@ -14,38 +14,68 @@ function onOpen(){
 
 function onMessage(event){
     clearInterval(recon);
-    let data;
+    let eventData;
     try{
-        data = JSON.parse(event.data);
+        eventData = JSON.parse(event.data);
     } catch(e){
         return;
     }
-    console.log(data);
-    switch(data.opCode){
+    console.log(eventData);
+    switch(eventData.opCode){
         case "MSG":
-            if(data.error) return console.error(data.error);
+            if(eventData.error) return console.error(eventData.error);
             messageContainer.innerHTML += `<div class="message">
 <pre>
-${data.data.userID}・${new Date(parseInt(data.data.createdAt)).toLocaleString()}
-${data.data.content}
+${eventData.data.userID}・${new Date(parseInt(eventData.data.createdAt)).toLocaleString()}
+${eventData.data.content}
 </pre></div>`;
             messageContainer.scrollTop = messageContainer.scrollHeight;
             break;
         case "HRT":
         case "ACK":
-            if(data.data.messages){
-                messageContainer.innerHTML = data.data.messages.map(msg => `<div class="message">
+            if(eventData.data.messages){
+                messageContainer.innerHTML = eventData.data.messages.map(msg => `<div class="message" id="${msg.ID}">
 <pre>
 ${msg.userID}・${new Date(parseInt(msg.createdAt)).toLocaleString()}
 ${msg.content}
 </pre></div>`).join("");
+                eventData.data.messages.map(msg => {
+                    const htmlMsg = document.getElementById(msg.ID);
+                    htmlMsg.addEventListener("contextmenu",function(event){
+                        event.preventDefault();
+                        const ctxMenu = document.getElementById("messageCtx");
+                        if(ctxMenu["data-messageID"] === msg.ID){
+                            ctxMenu.style.display = "";
+                            ctxMenu.style.left = "";
+                            ctxMenu.style.top = "";
+                            ctxMenu["data-messageID"] = "";
+                            return;
+                        }
+                        ctxMenu.style.display = "block";
+                        ctxMenu.style.left = (event.pageX - 10)+"px";
+                        ctxMenu.style.top = (event.pageY - 10)+"px";
+                        ctxMenu["data-messageID"] = msg.ID;
+                    },false);
+                });
             }
-            if(data.data.userList){
-                userContainer.innerHTML = data.data.userList.map(usr => `<div class="user ${usr.online}">${usr.ID}</div>`).join("");
+            if(eventData.data.userList){
+                userContainer.innerHTML = eventData.data.userList.map(usr => `<div class="user ${usr.online}">${usr.ID}</div>`).join("");
             }
             break;
+        case "DEL_MSG":
+            if("messageID" in eventData.data){
+                document.getElementById(eventData.data.messageID).remove();
+            }
     }
 }
+
+document.addEventListener("click",function(event){
+    const ctxMenu = document.getElementById("messageCtx");
+    ctxMenu.style.display = "";
+    ctxMenu.style.left = "";
+    ctxMenu.style.top = "";
+    ctxMenu["data-messageID"] = "";
+},false);
 
 function onClose(){
     console.log("Closing connection.");
@@ -93,3 +123,14 @@ messageField.addEventListener("keydown", (e)=>{
 <div class="message">User1: Hello!</div>
 <div class="channel">Channel 1</div>
 */
+
+function deleteMessage(){
+    const ctxMenu = document.getElementById("messageCtx");
+    if(ctxMenu["data-messageID"] === undefined || ctxMenu["data-messageID"] === "") return;
+    ws.send(JSON.stringify({
+        opCode: "DEL_MSG",
+        data: {
+            messageID: ctxMenu["data-messageID"]
+        }
+    }))
+}
