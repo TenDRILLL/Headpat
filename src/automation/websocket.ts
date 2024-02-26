@@ -180,7 +180,7 @@ const init = ()=>{
             const inspect = await readDatabase("auth",x.id) as Auth;
             if(x.session !== inspect.sessionSecret || Date.now() - x.heartbeat > 1000*15){
                 connections.delete(x.id);
-                console.log(`${x.id} lost connection.`);
+                //console.log(`${x.id} lost connection.`);
             }
         });
     }, 30*1000);
@@ -233,6 +233,5 @@ async function sendMessage(message: Message){
 }
 
 export {
-    init,
-    sendMessage
+    init
 }
