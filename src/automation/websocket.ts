@@ -7,6 +7,7 @@ import Server from "../structs/Server";
 import {getUser} from "./usermanager";
 import Message from "../structs/Message";
 import Channel from "../structs/Channel";
+import {compare, hash} from "bcrypt";
 
 let server;
 
@@ -106,6 +107,8 @@ const init = ()=>{
                             error: "Message data not a match."
                         }));
                     });
+                case "UPD_PRF":
+                    return updateProfile(event, ws);
             }
         });
 
@@ -138,7 +141,12 @@ const init = ()=>{
                 messagePromises.push(readDatabase("messages", messageID) as Promise<Message>);
             });
             messages = await Promise.all(messagePromises);
-            const userList = server.members.map(x => ({ID: x, online: connections.has(x) ? "ONLINE" : "OFFLINE"}));
+            const userPromises: Promise<User>[] = [];
+            server.members.forEach(memberID => {
+                userPromises.push(getUser(memberID));
+            });
+            const users = await Promise.all(userPromises);
+            const userList = users.map(x => ({user: x, online: connections.has(x.ID) ? "ONLINE" : "OFFLINE"}));
             ws.send(JSON.stringify({
                 opCode: "ACK",
                 data: {
@@ -164,7 +172,12 @@ const init = ()=>{
             messagePromises.push(readDatabase("messages", messageID) as Promise<Message>);
         });
         messages = await Promise.all(messagePromises);
-        const userList = server.members.map(x => ({ID: x, online: connections.has(x) ? "ONLINE" : "OFFLINE"}));
+        const userPromises: Promise<User>[] = [];
+        server.members.forEach(memberID => {
+            userPromises.push(getUser(memberID));
+        });
+        const users = await Promise.all(userPromises);
+        const userList = users.map(x => ({user: x, online: connections.has(x.ID) ? "ONLINE" : "OFFLINE"}));
         ws.send(JSON.stringify({
             opCode: "HRT",
             data: {
@@ -230,6 +243,35 @@ async function sendMessage(message: Message){
         });
         Promise.all(queue).then(()=>res(true));
     });
+}
+
+async function updateProfile(event, ws){
+    const user = await getUser(ws.tid);
+    const auth: Auth | null = await readDatabase("auth",ws.tid) as Auth;
+    if(event.data.email){
+        const emailRgx = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/gi;
+        if(!emailRgx.test(event.data.email)) return ws.send(JSON.stringify({opCode: "UPD_PRF",error: "INVALID_EMAIL"}));
+        if(event.data.email.split("@").length !== 2 || event.data.email.split("@")[1] === "localhost") return ws.send(JSON.stringify({opCode: "UPD_PRF",error: "INVALID_EMAIL"}));
+        auth.email = event.data.email;
+    }
+    if(event.data.oldPass && event.data.newPass){
+        const validPass = await compare(event.data.oldPass, auth.passHash);
+        if(!validPass) return ws.send(JSON.stringify({error: "INVALID_PASSWORD"}));
+        auth.passHash = await hash(event.data.newPass, 13);
+    }
+    if(event.data.username){
+        user.username = event.data.username;
+    }
+    if(event.data.discriminator){
+        user.discriminator = event.data.discriminator;
+    }
+    await writeDatabase("users", ws.tid, user);
+    await writeDatabase("auth", ws.tid, auth);
+
+    ws.send(JSON.stringify({
+        opCode: "UPD_PRF",
+        data: {user, email: `${auth.email.substring(0,1)}*******${auth.email.split("@")[0].substring(auth.email.split("@")[0].length-1)}@${auth.email.split("@")[1]}`}
+    }))
 }
 
 export {

@@ -1,6 +1,7 @@
 const toast = document.getElementById("snackbar");
 
-document.getElementById("login").onclick = () => {
+function login(){
+
     toast.className = toast.className.replace("show", "");
     fetch("/login", {
         method: "POST",
@@ -28,7 +29,11 @@ document.getElementById("login").onclick = () => {
             if("error" in resp){
                 showError(resp.error);
             }
-    });
+        });
+}
+
+document.getElementById("login").onclick = () => {
+    login();
 }
 
 function showError(err){
@@ -71,3 +76,6 @@ document.getElementById("tfalogin").onclick = ()=>{
         });
 };
 
+document.getElementById("password").addEventListener("submit", (e)=>{
+    login();
+});

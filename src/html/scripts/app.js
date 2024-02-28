@@ -2,6 +2,8 @@ let ws = new WebSocket("ws://192.168.0.158:5001");
 const heart = setInterval(sendHeartbeat, 5000);
 let recon;
 
+let userStore = {};
+
 const closeDanger = document.getElementById("close-danger");
 const messageField = document.getElementById("messageField");
 const messageContainer = document.getElementById("messageContainer");
@@ -26,17 +28,24 @@ function onMessage(event){
             if(eventData.error) return console.error(eventData.error);
             messageContainer.innerHTML += `<div class="message">
 <pre>
-${eventData.data.userID}・${new Date(parseInt(eventData.data.createdAt)).toLocaleString()}
+${userStore[eventData.data.userID]?.username ?? eventData.data.userID}・${new Date(parseInt(eventData.data.createdAt)).toLocaleString()}
 ${eventData.data.content}
 </pre></div>`;
             messageContainer.scrollTop = messageContainer.scrollHeight;
             break;
         case "HRT":
         case "ACK":
+            if(eventData.data.userList){
+                userContainer.innerHTML = "";
+                eventData.data.userList.forEach(entry => {
+                    userStore[entry.user.ID] = entry.user;
+                    userContainer.innerHTML += `<div class="user ${entry.online}" id="${entry.user.ID}">${entry.user.username}</div>`;
+                });
+            }
             if(eventData.data.messages){
                 messageContainer.innerHTML = eventData.data.messages.map(msg => `<div class="message" id="${msg.ID}">
 <pre>
-${msg.userID}・${new Date(parseInt(msg.createdAt)).toLocaleString()}
+${userStore[msg.userID]?.username ?? msg.userID}・${new Date(parseInt(msg.createdAt)).toLocaleString()}
 ${msg.content}
 </pre></div>`).join("");
                 eventData.data.messages.map(msg => {
@@ -58,14 +67,17 @@ ${msg.content}
                     },false);
                 });
             }
-            if(eventData.data.userList){
-                userContainer.innerHTML = eventData.data.userList.map(usr => `<div class="user ${usr.online}">${usr.ID}</div>`).join("");
-            }
             break;
         case "DEL_MSG":
             if("messageID" in eventData.data){
                 document.getElementById(eventData.data.messageID).remove();
             }
+        case "UPD_PRF":
+            document.getElementById("user-profile").style.setProperty("display", "none", "important");
+
+            document.getElementById("username").value = eventData.data.user.username ?? "";
+            document.getElementById("discriminator").value = eventData.data.user.discriminator ?? "";
+            document.getElementById("email").placeholder = eventData.data.email ?? "";
     }
 }
 
@@ -102,9 +114,9 @@ function reconnect() {
     ws.onclose = onClose;
 }
 
-closeDanger.onclick = () => {
+/*closeDanger.onclick = () => {
     document.getElementById("dangerNotice").remove();
-};
+};*/
 
 messageField.addEventListener("keydown", (e)=>{
     if(e.key === "Enter" && messageField.value.trim().length > 0){
@@ -133,4 +145,41 @@ function deleteMessage(){
             messageID: ctxMenu["data-messageID"]
         }
     }))
+}
+document.getElementById("user-profile").style.setProperty("display", "none", "important");
+document.getElementById("profile_popup").onclick = ()=>{
+    document.getElementById("user-profile").style.setProperty("display", "flex", "important");
+}
+
+document.getElementById("close-profile").onclick = ()=>{
+    document.getElementById("user-profile").style.setProperty("display", "none", "important");
+}
+
+document.getElementById("profile_picture").onclick = ()=>{
+    alert("Change PFP is a Work-In-Progress");
+}
+
+document.getElementById("save_profile").onclick = ()=>{
+    //const profilePicture = document.getElementById("profile-picture").innerHTML or smth;
+    const username = document.getElementById("username").value;
+    const discriminator = document.getElementById("discriminator").value;
+    const email = document.getElementById("email").value;
+    const oldPass = document.getElementById("old_password").value;
+    const newPass = document.getElementById("new_password").value;
+    const data = {};
+    if(username.length > 0) data["username"] = username;
+    if(discriminator.length > 0) data["discriminator"] = discriminator;
+    if(email.length > 0) data["email"] = email;
+    if(newPass.length > 0){
+        if(oldPass.length > 0){
+            //Complain to user.
+        } else {
+            data["oldPass"] = oldPass;
+            data["newPass"] = newPass;
+        }
+    }
+    ws.send(JSON.stringify({
+        opCode: "UPD_PRF",
+        data
+    }));
 }

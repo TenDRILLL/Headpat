@@ -31,7 +31,9 @@ loginRouter.post("/", async (req, res)=>{
         .setIssuer("urn:Headpat:axiom")
         .setAudience("urn:Headpat:users")
         .sign(new TextEncoder().encode(process.env.JWT_SECRET as string ?? "COOLSECRET"));
-
+    if(req.body.remember){
+        return res.cookie("auth",jwt, {maxAge: 9999}).json({redirect: "/app"});
+    }
     res.cookie("auth",jwt).json({redirect: "/app"});
 });
 

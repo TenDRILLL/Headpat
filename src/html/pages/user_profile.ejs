@@ -1,0 +1,26 @@
+<div id="user-profile" class="card text-center user-profile" style="width: 18rem; background-color: rgba(175,175,175,0.2)">
+    <button id="close-profile" type="button" class="btn-close no-select" aria-label="Close" style="float: right;"></button>
+    <div class="card-body">
+        <div class="card-header mb-3">
+            <img id="profile_picture" class="card-image rounded-circle no-select" src="./resource/user/<%= user.ID %>" alt="Your Profile Picture." />
+        </div>
+        <div class="input-group mb-3">
+            <input id="username" type="text" class="form-control" placeholder="Username" aria-label="Username" value="<%= user.username ?? "" %>">
+            <div class="input-group-prepend">
+                <span class="input-group-text no-select" id="discrim_prefix">#</span>
+            </div>
+            <input id="discriminator" type="text" class="form-control" placeholder="0001" aria-label="0001" aria-describedby="discrim_prefix" value="<%= user.discriminator ?? "" %>">
+        </div>
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text no-select" id="email_prefix">📧</span>
+            </div>
+            <input id="email" type="text" class="form-control" placeholder="<%= email ?? "Log-in Email" %>" aria-label="<%= email ?? "Log-in Email" %>" aria-describedby="email_prefix" value="">
+        </div>
+        <div class="input-group mb-3">
+            <input id="old_password" type="password" class="form-control" placeholder="Old Password" aria-label="Old Password">
+            <input id="new_password" type="password" class="form-control" placeholder="New Password" aria-label="New Password">
+        </div>
+        <a href="#" id="save_profile" class="btn btn-success no-select">Save</a>
+    </div>
+</div>
