@@ -18,8 +18,10 @@ registerRouter.post("/", async (req, res)=>{
     const emailRgx = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/gi;
     if(!emailRgx.test(req.body.email)) return res.json({error: "INVALID_EMAIL"});
     if(req.body.email.split("@").length !== 2 || req.body.email.split("@")[1] === "localhost") return res.json({error: "INVALID_EMAIL"});
+
     //This is only temp, registrationCode might be removed from final product, or not.
     if(req.body.registrationCode !== "SC1P10") return res.json({error: "INVALID_REGCODE"});
+
     const auth = await getAuth(req.body.email);
     if(auth !== null) return res.json({error: "EMAIL_USED"});
     const passHash = await hash(req.body.password, 13);
@@ -32,7 +34,7 @@ registerRouter.post("/", async (req, res)=>{
             email: req.body.email,
             passHash,
             tfaSecret: "",
-            sessionSecret: "A"
+            sessionSecret: "Alpha"
         }
     );
     res.json({redirect: "/login"});

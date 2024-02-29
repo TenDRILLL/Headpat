@@ -1,4 +1,5 @@
-let ws = new WebSocket("ws://192.168.0.158:5001");
+const wsURL = "wss://headpat.tentti.xyz/ws";
+let ws = new WebSocket(wsURL);
 const heart = setInterval(sendHeartbeat, 5000);
 let recon;
 
@@ -108,7 +109,7 @@ function sendHeartbeat(){
 
 function reconnect() {
     console.log("Attempting reconnection to WS");
-    ws = new WebSocket("ws://localhost:5001");
+    ws = new WebSocket(wsURL);
     ws.onopen = onOpen;
     ws.onmessage = onMessage;
     ws.onclose = onClose;

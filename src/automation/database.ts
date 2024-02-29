@@ -1,5 +1,8 @@
 import Keyv from "keyv";
 import Auth from "../structs/Auth";
+import Server from "../structs/Server";
+import User from "../structs/User";
+import Channel from "../structs/Channel";
 
 let dbs: {[key: string]: Keyv | null} = {
     "auth": null,
@@ -17,6 +20,32 @@ const initDatabase = async () => {
             console.log("Database error!");
         });
     });
+
+    if(!await dbs["users"]!.has("0")){
+        dbs["users"]!.set("0",{
+            ID: "0",
+            username: "SYSTEM",
+            discriminator: "0000",
+            role: "SYSTEM",
+            createdAt: Date.now().toString(),
+            servers: ["0"]
+        } as User);
+    }
+
+    if(!await dbs["servers"]!.has("0")){
+        dbs["servers"]!.set("0", {
+            ID: "0",
+            name: "DEV",
+            userID: "0",
+            channels: ["0"],
+            members: ["0"]
+        } as Server);
+        dbs["channels"]!.set("0", {
+            ID: "0",
+            serverID: "0",
+            messages: []
+        } as Channel);
+    }
 }
 
 const writeDatabase = (db, id, data)=>{

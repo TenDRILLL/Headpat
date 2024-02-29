@@ -13,7 +13,7 @@ let server;
 
 const init = ()=>{
     server = new WebSocketServer({
-        port: 5001,
+        port: parseInt(process.env.WSPORT as string) ?? 5001,
         perMessageDeflate: false
     });
 
@@ -155,7 +155,10 @@ const init = ()=>{
                     userList
                 }
             }));
-        }).catch(() => ws.close());
+        }).catch((e) => {
+            console.log(e);
+            ws.close();
+        });
     });
 
     async function heartbeat(ws){

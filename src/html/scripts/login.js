@@ -23,7 +23,7 @@ function login(){
                 if(resp.data === "2FA_REQUIRED"){
                     document.getElementById("tfa-popup").style.display = "block";
                     document.getElementById("overlay").style.display = "block";
-                    tfa1.focus();
+                    document.getElementById("tfa1").focus();
                 }
             }
             if("error" in resp){
@@ -76,6 +76,8 @@ document.getElementById("tfalogin").onclick = ()=>{
         });
 };
 
-document.getElementById("password").addEventListener("submit", (e)=>{
-    login();
+document.getElementById("password").addEventListener("keydown", (e)=>{
+    if(e.key === "Enter") {
+        login();
+    }
 });

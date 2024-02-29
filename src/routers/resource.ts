@@ -9,6 +9,7 @@ resourceRouter.get("/user/:userId/", async (req, res)=>{
     if(req.params.userId === undefined){
         return res.status(400);
     }
+    //Upcoming: get user pfp from datastring from db
     readDatabase("users", req.params.userId).then(user => {
 
     }).catch(e => res.sendFile(""));

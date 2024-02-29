@@ -18,7 +18,7 @@ const createUser = async (id): Promise<User> => {
         if(exists !== undefined) rej("USER_EXISTS");
         const user = {
             ID: id,
-            username: "",
+            username: "Nya",
             role: "MEMBER",
             createdAt: Date.now().toString(),
             servers: ["0"]
