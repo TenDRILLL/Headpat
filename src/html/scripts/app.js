@@ -4,7 +4,7 @@ ws.onopen = onOpen;
 ws.onmessage = onMessage;
 ws.onclose = onClose;
 ws.onerror = onError;
-const heart = setInterval(sendHeartbeat, 5000);
+let heart ;
 
 let userStore = {};
 
@@ -15,6 +15,7 @@ const userContainer = document.getElementById("userContainer");
 
 function onOpen(){
     ws.send("");
+    heart = setInterval(sendHeartbeat, 5000);
 }
 
 function onMessage(event){
@@ -42,6 +43,7 @@ ${eventData.data.content}
                 userContainer.innerHTML = "";
                 eventData.data.userList.forEach(entry => {
                     userStore[entry.user.ID] = entry.user;
+                    userStore.sort((b,a) => a.online - b.online);
                     userContainer.innerHTML += `<div class="user ${entry.online}" id="${entry.user.ID}">${entry.user.username}</div>`;
                 });
             }
@@ -131,9 +133,9 @@ function reconnect() {
     ws.onerror = onError;
 }
 
-/*closeDanger.onclick = () => {
+closeDanger.onclick = () => {
     document.getElementById("dangerNotice").remove();
-};*/
+};
 
 messageField.addEventListener("keydown", (e)=>{
     if(e.key === "Enter" && messageField.value.trim().length > 0){
