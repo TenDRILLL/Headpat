@@ -63,7 +63,7 @@ const readDatabase = (db, id)=>{
     //console.log(`READ: ${db} - ${id}`);
     return new Promise(async (res, rej) => {
         if(dbs[db] !== null && Object.keys(dbs).includes(db)){
-            if(!await dbs[db]!.has(id)) return rej("NO_DATA");
+            if(!await dbs[db]!.has(id)) return rej(`${db} > ${id} > NO_DATA`);
             dbs[db]!.get(id).then(data => {
                 //console.log(data);
                 res(data);

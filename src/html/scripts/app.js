@@ -1,7 +1,10 @@
 const wsURL = "wss://headpat.tentti.xyz/ws";
 let ws = new WebSocket(wsURL);
+ws.onopen = onOpen;
+ws.onmessage = onMessage;
+ws.onclose = onClose;
+ws.onerror = onError;
 const heart = setInterval(sendHeartbeat, 5000);
-let recon;
 
 let userStore = {};
 
@@ -12,11 +15,9 @@ const userContainer = document.getElementById("userContainer");
 
 function onOpen(){
     ws.send("");
-    clearInterval(recon);
 }
 
 function onMessage(event){
-    clearInterval(recon);
     let eventData;
     try{
         eventData = JSON.parse(event.data);
@@ -34,8 +35,9 @@ ${eventData.data.content}
 </pre></div>`;
             messageContainer.scrollTop = messageContainer.scrollHeight;
             break;
-        case "HRT":
         case "ACK":
+            hideToast();
+        case "HRT":
             if(eventData.data.userList){
                 userContainer.innerHTML = "";
                 eventData.data.userList.forEach(entry => {
@@ -81,6 +83,17 @@ ${msg.content}
             document.getElementById("email").placeholder = eventData.data.email ?? "";
     }
 }
+const toast = document.getElementById("snackbar");
+function showToast(msg, load, time){
+    toast.className = "show";
+    toast.innerHTML = msg;
+    if(time !== undefined && time !== null){setTimeout(()=>{toast.className = toast.className.replace("show", "");}, time*1000);}
+    if(load !== undefined && load !== null){ toast.innerHTML = `<p>${msg}</p>
+    <div id="dot-spin" class="dot-spin"></div>` }
+}
+function hideToast(){
+    toast.className = "";
+}
 
 document.addEventListener("click",function(event){
     const ctxMenu = document.getElementById("messageCtx");
@@ -94,12 +107,14 @@ function onClose(){
     console.log("Closing connection.");
     ws.close();
     clearInterval(heart);
-    recon = setInterval(reconnect, 5000);
+    showToast("Connection Lost, reconnecting...", true);
+    setTimeout(reconnect, 5000);
 }
 
-ws.onopen = onOpen;
-ws.onmessage = onMessage;
-ws.onclose = onClose;
+function onError(e){
+    console.log(`E:${JSON.stringify(e)}`);
+    ws.close();
+}
 
 function sendHeartbeat(){
     ws.send(JSON.stringify({
@@ -113,6 +128,7 @@ function reconnect() {
     ws.onopen = onOpen;
     ws.onmessage = onMessage;
     ws.onclose = onClose;
+    ws.onerror = onError;
 }
 
 /*closeDanger.onclick = () => {
@@ -184,3 +200,4 @@ document.getElementById("save_profile").onclick = ()=>{
         data
     }));
 }
+

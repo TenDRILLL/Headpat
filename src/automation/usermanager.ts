@@ -6,15 +6,15 @@ const getUser = async (id): Promise<User> => {
     return new Promise((res)=>{
         readDatabase("users",id).then(user => {
             res(user as User);
-        }).catch(()=>{
-            res(createUser(id));
+        }).catch(async (err)=>{
+            res(await createUser(id));
         });
     });
 };
 
 const createUser = async (id): Promise<User> => {
-    return new Promise((res, rej)=>{
-        const exists = readDatabase("users", id);
+    return new Promise(async (res, rej)=>{
+        const exists = await readDatabase("users", id).catch(e => console.log(e));
         if(exists !== undefined) rej("USER_EXISTS");
         const user = {
             ID: id,
