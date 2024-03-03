@@ -38,12 +38,18 @@ ${eventData.data.content}
             break;
         case "ACK":
             hideToast();
+            clearTimeout(heart);
+            heart = setInterval(sendHeartbeat, 5000);
         case "HRT":
             if(eventData.data.userList){
                 userContainer.innerHTML = "";
-                eventData.data.userList.forEach(entry => {
+                eventData.data.userList
+                    .sort((a,b) => {
+                        const x = ["ONLINE","OFFLINE"];
+                        return x.indexOf(a.online) - x.indexOf(b.online);
+                    })
+                    .forEach(entry => {
                     userStore[entry.user.ID] = entry.user;
-                    userStore.sort((b,a) => a.online - b.online);
                     userContainer.innerHTML += `<div class="user ${entry.online}" id="${entry.user.ID}">${entry.user.username}</div>`;
                 });
             }
