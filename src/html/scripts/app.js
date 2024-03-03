@@ -5,7 +5,7 @@ ws.onmessage = onMessage;
 ws.onclose = onClose;
 ws.onerror = onError;
 let heart;
-let version;
+let version = "";
 
 let userStore = {};
 
@@ -26,7 +26,7 @@ function onMessage(event){
     } catch(e){
         return;
     }
-    console.log(eventData);
+    //console.log(eventData);
     switch(eventData.opCode){
         case "MSG":
             if(eventData.error) return console.error(eventData.error);
@@ -41,11 +41,13 @@ ${linkifyHtml(eventData.data.content, {target: "_blank"})}
             hideToast();
             clearTimeout(heart);
             heart = setInterval(sendHeartbeat, 5000);
-            version = eventData.data.version;
+            if(version === "") {version = eventData.data.version;}
         case "HRT":
             if(eventData.data.version !== version){
                 showToast("Version out of date, reloading in 5 seconds...");
-                return setTimeout(location.reload, 5000);
+                return setTimeout(()=>{
+                    location.reload();
+                }, 5000);
             }
             if(eventData.data.userList){
                 userContainer.innerHTML = "";
