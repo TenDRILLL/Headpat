@@ -4,7 +4,8 @@ ws.onopen = onOpen;
 ws.onmessage = onMessage;
 ws.onclose = onClose;
 ws.onerror = onError;
-let heart ;
+let heart;
+let version;
 
 let userStore = {};
 
@@ -31,7 +32,7 @@ function onMessage(event){
             if(eventData.error) return console.error(eventData.error);
             messageContainer.innerHTML += `<div class="message">
 <pre>
-${userStore[eventData.data.userID]?.username ?? eventData.data.userID}・${new Date(parseInt(eventData.data.createdAt)).toLocaleString()}
+${userStore[eventData.data.userID]?.username ?? eventData.data.userID}・${parseTimestamp(eventData.data.createdAt)}
 ${linkifyHtml(eventData.data.content, {target: "_blank"})}
 </pre></div>`;
             messageContainer.scrollTop = messageContainer.scrollHeight;
@@ -40,7 +41,12 @@ ${linkifyHtml(eventData.data.content, {target: "_blank"})}
             hideToast();
             clearTimeout(heart);
             heart = setInterval(sendHeartbeat, 5000);
+            version = eventData.data.version;
         case "HRT":
+            if(eventData.data.version !== version){
+                showToast("Version out of date, reloading in 5 seconds...");
+                return setTimeout(location.reload, 5000);
+            }
             if(eventData.data.userList){
                 userContainer.innerHTML = "";
                 eventData.data.userList
@@ -56,7 +62,7 @@ ${linkifyHtml(eventData.data.content, {target: "_blank"})}
             if(eventData.data.messages){
                 messageContainer.innerHTML = eventData.data.messages.map(msg => `<div class="message" id="${msg.ID}">
 <pre>
-${userStore[msg.userID]?.username ?? msg.userID}・${new Date(parseInt(msg.createdAt)).toLocaleString()}
+${userStore[msg.userID]?.username ?? msg.userID}・${parseTimestamp(msg.createdAt)}
 ${linkifyHtml(msg.content, {target: "_blank"})}
 </pre></div>`).join("");
                 eventData.data.messages.map(msg => {
@@ -91,6 +97,21 @@ ${linkifyHtml(msg.content, {target: "_blank"})}
             document.getElementById("email").placeholder = eventData.data.email ?? "";
     }
 }
+
+function parseTimestamp(timestamp){
+    const msgTime = new Date(parseInt(timestamp));
+    const now = new Date();
+    const clock = `${msgTime.getHours().toString().padStart(2,"0")}:${msgTime.getMinutes().toString().padStart(2,"0")}`;
+    const calendar = `${msgTime.getDate().toString().padStart(2,"0")}/${msgTime.getMonth().toString().padStart(2,"0")}/${msgTime.getFullYear()}`;
+    if(now.getTime() - msgTime.getTime() < 1000*60*60*24 && now.getDate() === msgTime.getDate()){
+        return `Today at ${clock}`;
+    } else if(now.getTime() - msgTime.getTime() < 1000*60*60*24*2 && now.getDate() !== msgTime.getDate()){
+        return `Yesterday at ${clock}`;
+    } else {
+        return `${calendar} ${clock}`;
+    }
+}
+
 const toast = document.getElementById("snackbar");
 function showToast(msg, load, time){
     toast.className = "show";

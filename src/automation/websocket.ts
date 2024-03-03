@@ -10,6 +10,7 @@ import Channel from "../structs/Channel";
 import {compare, hash} from "bcrypt";
 
 let server;
+const version = "1.0.0_113";
 
 const init = ()=>{
     server = new WebSocketServer({
@@ -152,7 +153,8 @@ const init = ()=>{
                 data: {
                     user,
                     messages,
-                    userList
+                    userList,
+                    version
                 }
             }));
         }).catch((e) => {
@@ -186,7 +188,8 @@ const init = ()=>{
             data: {
                 user,
                 messages,
-                userList
+                userList,
+                version
             }
         }));
     }
