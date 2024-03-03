@@ -32,7 +32,7 @@ function onMessage(event){
             messageContainer.innerHTML += `<div class="message">
 <pre>
 ${userStore[eventData.data.userID]?.username ?? eventData.data.userID}・${new Date(parseInt(eventData.data.createdAt)).toLocaleString()}
-${eventData.data.content}
+${linkifyHtml(eventData.data.content, {target: "_blank"})}
 </pre></div>`;
             messageContainer.scrollTop = messageContainer.scrollHeight;
             break;
@@ -57,7 +57,7 @@ ${eventData.data.content}
                 messageContainer.innerHTML = eventData.data.messages.map(msg => `<div class="message" id="${msg.ID}">
 <pre>
 ${userStore[msg.userID]?.username ?? msg.userID}・${new Date(parseInt(msg.createdAt)).toLocaleString()}
-${msg.content}
+${linkifyHtml(msg.content, {target: "_blank"})}
 </pre></div>`).join("");
                 eventData.data.messages.map(msg => {
                     const htmlMsg = document.getElementById(msg.ID);
