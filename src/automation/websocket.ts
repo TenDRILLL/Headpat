@@ -8,13 +8,15 @@ import {getUser} from "./usermanager";
 import Message from "../structs/Message";
 import Channel from "../structs/Channel";
 import {compare, hash} from "bcrypt";
+import {updatePass} from "./authmanager";
 
 let server;
-const version = "1.0.0_118";
+//Remember to increment this when publishing an update to enforce a reload of clients.
+const version = "1.0.0_119";
 
 const init = ()=>{
     server = new WebSocketServer({
-        port: parseInt(process.env.WSPORT as string) ?? 5001,
+        port: parseInt(process.env.WSPORT as string),
         perMessageDeflate: false
     });
 
@@ -77,7 +79,7 @@ const init = ()=>{
                                                     }
                                                 }));
                                             }
-                                        });
+                                        }); //What the fuck is this catching hell... I need to improve upon this XD
                                     }).catch(()=>{
                                         ws.send(JSON.stringify({
                                             opCode: "DEL_MSG",
@@ -121,7 +123,7 @@ const init = ()=>{
         });
         if(auth.length < 1) return ws.close();
 
-        jwtVerify(auth, new TextEncoder().encode(process.env.JWT_SECRET as string ?? "COOLSECRET")).then(async jwtData => {
+        jwtVerify(auth, new TextEncoder().encode(process.env.JWT_SECRET as string)).then(async jwtData => {
             const payload = jwtData.payload;
             if(payload.iss !== "urn:Headpat:axiom" || payload.aud !== "urn:Headpat:users") return ws.close();
             ws.tid = payload.id;
@@ -183,6 +185,7 @@ const init = ()=>{
         });
         const users = await Promise.all(userPromises);
         const userList = users.map(x => ({user: x, online: connections.has(x.ID) ? "ONLINE" : "OFFLINE"}));
+        //This really shouldn't send that much data... Should trust the user's cache.
         ws.send(JSON.stringify({
             opCode: "HRT",
             data: {
@@ -263,7 +266,7 @@ async function updateProfile(event, ws){
     if(event.data.oldPass && event.data.newPass){
         const validPass = await compare(event.data.oldPass, auth.passHash);
         if(!validPass) return ws.send(JSON.stringify({error: "INVALID_PASSWORD"}));
-        auth.passHash = await hash(event.data.newPass, 13);
+        await updatePass(ws.tid, event.data.newPass);
     }
     if(event.data.username){
         user.username = event.data.username;
@@ -274,6 +277,7 @@ async function updateProfile(event, ws){
     await writeDatabase("users", ws.tid, user);
     await writeDatabase("auth", ws.tid, auth);
 
+    //Mask the email being sent.
     ws.send(JSON.stringify({
         opCode: "UPD_PRF",
         data: {user, email: `${auth.email.substring(0,1)}*******${auth.email.split("@")[0].substring(auth.email.split("@")[0].length-1)}@${auth.email.split("@")[1]}`}

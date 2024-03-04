@@ -7,6 +7,7 @@ const getUser = async (id): Promise<User> => {
         readDatabase("users",id).then(user => {
             res(user as User);
         }).catch(async (err)=>{
+            //It'd only fail if the user object doesn't exist already, so we create it.
             res(await createUser(id));
         });
     });
@@ -33,10 +34,10 @@ const createUser = async (id): Promise<User> => {
             createdAt: Date.now().toString(),
             servers: ["0"]
         };
-        writeDatabase("users", id, user);
-        readDatabase("servers","0").then((srv: Server) => {
+        await writeDatabase("users", id, user);
+        await readDatabase("servers","0").then(async (srv: Server) => {
             srv.members.push(id);
-            writeDatabase("servers","0",srv);
+            await writeDatabase("servers","0",srv);
         });
         res(user);
     });

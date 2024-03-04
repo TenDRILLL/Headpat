@@ -12,11 +12,6 @@ registerRouter.get("/", (req, res)=>{
     res.render("register.ejs", {});
 });
 
-/*registerRouter.get("/hax", (req, res)=>{
-    if(req.cookies.auth) return res.redirect("/app");
-    res.render("noregister.ejs", {});
-});*/
-
 registerRouter.post("/", async (req, res)=>{
     const emailRgx = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/gi;
     if(!emailRgx.test(req.body.email)) return res.json({error: "INVALID_EMAIL"});

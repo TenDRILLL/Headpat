@@ -1,7 +1,6 @@
 const toast = document.getElementById("snackbar");
 
 function login(){
-
     toast.className = toast.className.replace("show", "");
     fetch("/login", {
         method: "POST",
@@ -42,6 +41,7 @@ function showError(err){
     setTimeout(()=>{toast.className = toast.className.replace("show", "");}, 5000);
 }
 
+//This is shit. I also want to support pasting the code. Needs rework.
 for(let i = 1; i < 7; i++){
     document.getElementById(`tfa${i}`).addEventListener("input", (e)=>{
         if(e.inputType === "deleteContentBackward"){

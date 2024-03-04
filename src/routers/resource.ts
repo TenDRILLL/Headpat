@@ -6,13 +6,14 @@ const resourceRouter = Router();
 
 resourceRouter.get("/user/:userId/", async (req, res)=>{
     return res.sendFile("tmp.png", {root: `${__dirname}/../html/styles/`});
-    if(req.params.userId === undefined){
+    //This isn't implemented yet. Just thoughts
+    /*if(req.params.userId === undefined){
         return res.status(400);
     }
     //Upcoming: get user pfp from datastring from db
     readDatabase("users", req.params.userId).then(user => {
 
-    }).catch(e => res.sendFile(""));
+    }).catch(e => res.sendFile(""));*/
 });
 
 resourceRouter.get("/:resourceName", (req, res)=>{

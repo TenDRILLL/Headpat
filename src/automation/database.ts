@@ -15,6 +15,7 @@ let dbs: {[key: string]: Keyv | null} = {
 
 const initDatabase = async () => {
     Object.keys(dbs).forEach(key => {
+        //Considering moving DB to a MySQL DB, using SQLite for now.
         dbs[key] = new Keyv(`sqlite://${process.env.DATABASE}`, {namespace: key});
         dbs[key]!.on("error", (e)=>{
             console.log(e);
@@ -22,6 +23,8 @@ const initDatabase = async () => {
         });
     });
 
+    //This is done so that there's always a SYSTEM user, and the DEV server.
+    //In the future it's likely that the DEV server will be removed, or repurposed. SYSTEM user will remain.
     if(!await dbs["users"]!.has("0")){
         dbs["users"]!.set("0",{
             ID: "0",
@@ -47,6 +50,8 @@ const initDatabase = async () => {
             messages: []
         } as Channel);
     }
+
+    //This is here so that registration is possible on a fresh installation.
     const initCode = process.env.INIT_INVITE as string;
     if(!await dbs["regcode"]!.has(initCode)){
         dbs["regcode"]!.set(initCode,{
@@ -97,6 +102,7 @@ const removeDatabase = (db, id) => {
 }
 
 const rawDatabase = (db) => {
+    //Sometimes you want to be the Manager, and I can't blame you.
     return dbs[db];
 }
 

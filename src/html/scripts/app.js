@@ -1,4 +1,5 @@
 const wsURL = "wss://headpat.tentti.xyz/ws";
+//const wsURL = "ws://192.168.0.158:5001"; This is for local dev, don't mind it.
 let ws = new WebSocket(wsURL);
 ws.onopen = onOpen;
 ws.onmessage = onMessage;
@@ -36,6 +37,7 @@ function onMessage(event){
             clearTimeout(heart);
             heart = setInterval(sendHeartbeat, 5000);
             if(version === "") {version = eventData.data.version;}
+            //Intentional fallthrough.
         case "HRT":
             heartbeatR(eventData);
             break;
@@ -68,6 +70,7 @@ function parseTimestamp(timestamp){
     }
 }
 
+//This bad boy is responsible for updating the view.
 function heartbeatR(eventData){
     if(eventData.data.version !== version){
         showToast("Version out of date, reloading in 5 seconds...");
@@ -121,7 +124,7 @@ function message(eventData){
 ${userStore[eventData.data.userID]?.username ?? eventData.data.userID}・${parseTimestamp(eventData.data.createdAt)}
 ${linkifyHtml(eventData.data.content, {target: "_blank"})}
 </pre></div>`;
-    messageContainer.scrollTop = messageContainer.scrollHeight;
+    moveChat();
 }
 
 const toast = document.getElementById("snackbar");
@@ -185,14 +188,9 @@ messageField.addEventListener("keydown", (e)=>{
             }
         }));
         messageField.value = "";
+        moveChat();
     }
 });
-
-/*
-<div class="user">User1</div>
-<div class="message">User1: Hello!</div>
-<div class="channel">Channel 1</div>
-*/
 
 function deleteMessage(){
     const ctxMenu = document.getElementById("messageCtx");
@@ -204,10 +202,16 @@ function deleteMessage(){
         }
     }))
 }
+
+document.getElementById("logoutbutton").onclick = () =>{
+    location.href = "/logout";
+};
+
 document.getElementById("user-profile").style.setProperty("display", "none", "important");
-document.getElementById("profile_popup").onclick = ()=>{
+//This'll be reimplemented once I have the profile block created.
+/*document.getElementById("profile_popup").onclick = ()=>{
     document.getElementById("user-profile").style.setProperty("display", "flex", "important");
-}
+}*/
 
 document.getElementById("close-profile").onclick = ()=>{
     document.getElementById("user-profile").style.setProperty("display", "none", "important");
@@ -219,7 +223,7 @@ document.getElementById("profile_picture").onclick = ()=>{
 }
 
 document.getElementById("save_profile").onclick = ()=>{
-    //const profilePicture = document.getElementById("profile-picture").innerHTML or smth;
+    //const profilePicture = document.getElementById("profile-picture").innerHTML or smth idk yet
     const username = document.getElementById("username").value;
     const discriminator = document.getElementById("discriminator").value;
     const email = document.getElementById("email").value;
@@ -243,3 +247,9 @@ document.getElementById("save_profile").onclick = ()=>{
     }));
 }
 
+function moveChat(){
+    let temp = document.getElementById("messageContainer");
+    if(temp.scrollTop === (temp.scrollHeight - temp.offsetHeight)){
+        temp.scrollTop = temp.scrollHeight;
+    }
+}

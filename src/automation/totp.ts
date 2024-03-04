@@ -29,17 +29,13 @@ export {
 };
 
 /*
-const qr = speakeasy.otpauthURL({secret: secret, label: 'My App'});
-// Use the node-qrcode package
-// npm install --save node-qrcode
-var QRCode = require('qrcode');
+Should display QR and check the first code prior to applying, work for future.
 
-// Get the data URL of the authenticator URL
+const qr = speakeasy.otpauthURL({secret: secret, label: 'My App'});
+const QRCode = require('qrcode');
+
 QRCode.toDataURL(secret.otpauth_url, function(err, data_url) {
   console.log(data_url);
-
-  // Display this data URL to the user in an <img> tag
-  // Example:
   write('<img src="' + data_url + '">');
 });
 */

@@ -4,7 +4,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 
 const app = express();
-const port: number = parseInt(process.env.PORT as string) ?? 5000;
+const port: number = parseInt(process.env.PORT as string);
 
 app.set("view engine", "ejs");
 app.set("views", "./html/pages");
