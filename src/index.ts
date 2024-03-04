@@ -21,14 +21,13 @@ import resourceRouter from "./routers/resource";
 import registerRouter from "./routers/register";
 import appRouter from "./routers/app";
 import logoutRouter from "./routers/logout";
+import indexRouter from "./routers";
 app.use("/login", loginRouter);
 app.use("/resource", resourceRouter);
 app.use("/register", registerRouter);
 app.use("/app", appRouter);
 app.use("/logout", logoutRouter);
-app.get("/", (req, res)=>{
-    res.render("index.ejs");
-});
+app.use("/", indexRouter);
 
 /* ------------- DATABASE ------------- */
 

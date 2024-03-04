@@ -1,5 +1,5 @@
 import User from "../structs/User";
-import {readDatabase, writeDatabase} from "./database";
+import {rawDatabase, readDatabase, writeDatabase} from "./database";
 import Server from "../structs/Server";
 
 const getUser = async (id): Promise<User> => {
@@ -11,6 +11,16 @@ const getUser = async (id): Promise<User> => {
         });
     });
 };
+
+const getUserCount = async (): Promise<number> =>{
+    return new Promise(async res => {
+        let count = -1; //Due to system account being listed as well
+        for await (const [key, value] of rawDatabase("users")!.iterator()) {
+            count++;
+        }
+        res(count);
+    });
+}
 
 const createUser = async (id): Promise<User> => {
     return new Promise(async (res, rej)=>{
@@ -33,5 +43,6 @@ const createUser = async (id): Promise<User> => {
 };
 
 export {
-    getUser
+    getUser,
+    getUserCount
 }
