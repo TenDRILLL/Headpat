@@ -29,13 +29,7 @@ function onMessage(event){
     //console.log(eventData);
     switch(eventData.opCode){
         case "MSG":
-            if(eventData.error) return console.error(eventData.error);
-            messageContainer.innerHTML += `<div class="message">
-<pre>
-${userStore[eventData.data.userID]?.username ?? eventData.data.userID}・${parseTimestamp(eventData.data.createdAt)}
-${linkifyHtml(eventData.data.content, {target: "_blank"})}
-</pre></div>`;
-            messageContainer.scrollTop = messageContainer.scrollHeight;
+            message(eventData);
             break;
         case "ACK":
             hideToast();
@@ -43,60 +37,20 @@ ${linkifyHtml(eventData.data.content, {target: "_blank"})}
             heart = setInterval(sendHeartbeat, 5000);
             if(version === "") {version = eventData.data.version;}
         case "HRT":
-            if(eventData.data.version !== version){
-                showToast("Version out of date, reloading in 5 seconds...");
-                return setTimeout(()=>{
-                    location.reload();
-                }, 5000);
-            }
-            if(eventData.data.userList){
-                userContainer.innerHTML = "";
-                eventData.data.userList
-                    .sort((a,b) => {
-                        const x = ["ONLINE","OFFLINE"];
-                        return x.indexOf(a.online) - x.indexOf(b.online);
-                    })
-                    .forEach(entry => {
-                    userStore[entry.user.ID] = entry.user;
-                    userContainer.innerHTML += `<div class="user ${entry.online}" id="${entry.user.ID}">${entry.user.username}</div>`;
-                });
-            }
-            if(eventData.data.messages){
-                messageContainer.innerHTML = eventData.data.messages.map(msg => `<div class="message" id="${msg.ID}">
-<pre>
-${userStore[msg.userID]?.username ?? msg.userID}・${parseTimestamp(msg.createdAt)}
-${linkifyHtml(msg.content, {target: "_blank"})}
-</pre></div>`).join("");
-                eventData.data.messages.map(msg => {
-                    const htmlMsg = document.getElementById(msg.ID);
-                    htmlMsg.addEventListener("contextmenu",function(event){
-                        event.preventDefault();
-                        const ctxMenu = document.getElementById("messageCtx");
-                        if(ctxMenu["data-messageID"] === msg.ID){
-                            ctxMenu.style.display = "";
-                            ctxMenu.style.left = "";
-                            ctxMenu.style.top = "";
-                            ctxMenu["data-messageID"] = "";
-                            return;
-                        }
-                        ctxMenu.style.display = "block";
-                        ctxMenu.style.left = (event.pageX - 10)+"px";
-                        ctxMenu.style.top = (event.pageY - 10)+"px";
-                        ctxMenu["data-messageID"] = msg.ID;
-                    },false);
-                });
-            }
+            heartbeatR(eventData);
             break;
         case "DEL_MSG":
             if("messageID" in eventData.data){
                 document.getElementById(eventData.data.messageID).remove();
             }
+            break;
         case "UPD_PRF":
             document.getElementById("user-profile").style.setProperty("display", "none", "important");
 
             document.getElementById("username").value = eventData.data.user.username ?? "";
             document.getElementById("discriminator").value = eventData.data.user.discriminator ?? "";
             document.getElementById("email").placeholder = eventData.data.email ?? "";
+
     }
 }
 
@@ -112,6 +66,62 @@ function parseTimestamp(timestamp){
     } else {
         return `${calendar} ${clock}`;
     }
+}
+
+function heartbeatR(eventData){
+    if(eventData.data.version !== version){
+        showToast("Version out of date, reloading in 5 seconds...");
+        return setTimeout(()=>{
+            location.reload();
+        }, 5000);
+    }
+    if(eventData.data.userList){
+        userContainer.innerHTML = "";
+        eventData.data.userList
+            .sort((a,b) => {
+                const x = ["ONLINE","OFFLINE"];
+                return x.indexOf(a.online) - x.indexOf(b.online);
+            })
+            .forEach(entry => {
+                userStore[entry.user.ID] = entry.user;
+                userContainer.innerHTML += `<div class="user ${entry.online}" id="${entry.user.ID}">${entry.user.username}</div>`;
+            });
+    }
+    if(eventData.data.messages){
+        messageContainer.innerHTML = eventData.data.messages.map(msg => `<div class="message" id="${msg.ID}">
+<pre>
+${userStore[msg.userID]?.username ?? msg.userID}・${parseTimestamp(msg.createdAt)}
+${linkifyHtml(msg.content, {target: "_blank"})}
+</pre></div>`).join("");
+        eventData.data.messages.map(msg => {
+            const htmlMsg = document.getElementById(msg.ID);
+            htmlMsg.addEventListener("contextmenu",function(event){
+                event.preventDefault();
+                const ctxMenu = document.getElementById("messageCtx");
+                if(ctxMenu["data-messageID"] === msg.ID){
+                    ctxMenu.style.display = "";
+                    ctxMenu.style.left = "";
+                    ctxMenu.style.top = "";
+                    ctxMenu["data-messageID"] = "";
+                    return;
+                }
+                ctxMenu.style.display = "block";
+                ctxMenu.style.left = (event.pageX - 10)+"px";
+                ctxMenu.style.top = (event.pageY - 10)+"px";
+                ctxMenu["data-messageID"] = msg.ID;
+            },false);
+        });
+    }
+}
+
+function message(eventData){
+    if(eventData.error) return console.error(eventData.error);
+    messageContainer.innerHTML += `<div class="message">
+<pre>
+${userStore[eventData.data.userID]?.username ?? eventData.data.userID}・${parseTimestamp(eventData.data.createdAt)}
+${linkifyHtml(eventData.data.content, {target: "_blank"})}
+</pre></div>`;
+    messageContainer.scrollTop = messageContainer.scrollHeight;
 }
 
 const toast = document.getElementById("snackbar");
@@ -205,6 +215,7 @@ document.getElementById("close-profile").onclick = ()=>{
 
 document.getElementById("profile_picture").onclick = ()=>{
     alert("Change PFP is a Work-In-Progress");
+
 }
 
 document.getElementById("save_profile").onclick = ()=>{
