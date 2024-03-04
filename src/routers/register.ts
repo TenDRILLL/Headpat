@@ -1,6 +1,9 @@
 import {Router} from "express";
-import {getAuth, writeDatabase} from "../automation/database";
+import {readDatabase, writeDatabase} from "../automation/database";
+import {getAuth} from "../automation/authmanager";
 import {hash} from "bcrypt";
+import {randomBytes} from "crypto";
+import RegCode from "../structs/RegCode";
 
 const registerRouter = Router();
 
@@ -20,7 +23,14 @@ registerRouter.post("/", async (req, res)=>{
     if(req.body.email.split("@").length !== 2 || req.body.email.split("@")[1] === "localhost") return res.json({error: "INVALID_EMAIL"});
 
     //This is only temp, registrationCode might be removed from final product, or not.
-    if(req.body.registrationCode !== "SC1P10") return res.json({error: "INVALID_REGCODE"});
+    const regCode: RegCode = await readDatabase("regcode",req.body.registrationCode.toUpperCase()).catch(e => {
+        return res.json({error: "INVALID_REGCODE"});
+    }) as RegCode;
+    if(regCode.uses !== 0){
+        regCode.uses -= 1;
+    } else {
+        return res.json({error: "USED_REGCODE"});
+    }
 
     const auth = await getAuth(req.body.email);
     if(auth !== null) return res.json({error: "EMAIL_USED"});
@@ -34,7 +44,7 @@ registerRouter.post("/", async (req, res)=>{
             email: req.body.email,
             passHash,
             tfaSecret: "",
-            sessionSecret: "Alpha"
+            sessionSecret: randomBytes(3).toString('hex')
         }
     );
     res.json({redirect: "/login"});

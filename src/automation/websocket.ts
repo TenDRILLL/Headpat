@@ -10,7 +10,7 @@ import Channel from "../structs/Channel";
 import {compare, hash} from "bcrypt";
 
 let server;
-const version = "1.0.0_115";
+const version = "1.0.0_118";
 
 const init = ()=>{
     server = new WebSocketServer({

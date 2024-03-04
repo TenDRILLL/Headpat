@@ -1,6 +1,6 @@
 import {Router} from "express";
 import {SignJWT} from "jose";
-import {getAuth} from "../automation/database";
+import {getAuth} from "../automation/authmanager";
 import {compare} from "bcrypt";
 import {verifyTOTP} from "../automation/totp";
 

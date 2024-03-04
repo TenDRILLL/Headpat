@@ -1,15 +1,16 @@
 import Keyv from "keyv";
-import Auth from "../structs/Auth";
 import Server from "../structs/Server";
 import User from "../structs/User";
 import Channel from "../structs/Channel";
+import RegCode from "../structs/RegCode";
 
 let dbs: {[key: string]: Keyv | null} = {
     "auth": null,
     "users": null,
     "servers": null,
     "messages": null,
-    "channels": null
+    "channels": null,
+    "regcode": null
 };
 
 const initDatabase = async () => {
@@ -45,6 +46,15 @@ const initDatabase = async () => {
             serverID: "0",
             messages: []
         } as Channel);
+    }
+    const initCode = process.env.INIT_INVITE as string;
+    if(!await dbs["regcode"]!.has(initCode)){
+        dbs["regcode"]!.set(initCode,{
+            code: initCode,
+            uses: 500,
+            used: [],
+            createdBy: "0"
+        } as RegCode);
     }
 }
 
@@ -86,14 +96,8 @@ const removeDatabase = (db, id) => {
     });
 }
 
-const getAuth = (email): Promise<Auth|null> => {
-    return new Promise(async (res, rej)=>{
-        if(dbs["auth"] === null) return rej("NO_DATABASE");
-        for await (const [key, value] of dbs["auth"].iterator()) {
-            if(value.email === email) return res(value as Auth);
-        }
-        return res(null);
-    });
+const rawDatabase = (db) => {
+    return dbs[db];
 }
 
 export {
@@ -101,5 +105,5 @@ export {
     writeDatabase,
     readDatabase,
     removeDatabase,
-    getAuth
+    rawDatabase
 }
