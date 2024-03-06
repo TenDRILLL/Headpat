@@ -175,15 +175,13 @@ function reconnect() {
     ws.onerror = onError;
 }
 
-if(decodeURIComponent(document.cookie).split(";").includes("notice=true")){
+if(localStorage.getItem("notice") === "true"){
     document.getElementById("dangerNotice").remove();
 }
 
 closeDanger.onclick = () => {
     document.getElementById("dangerNotice").remove();
-    const d = new Date();
-    d.setTime(d.getTime() + (90*24*60*60*1000));
-    document.cookie = document.cookie + `notice=true;expires=${d.toUTCString()}`;
+    localStorage.setItem("notice", "true");
 };
 
 messageField.addEventListener("keydown", (e)=>{
