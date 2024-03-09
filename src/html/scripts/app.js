@@ -94,7 +94,7 @@ function heartbeatR(eventData){
         messageContainer.innerHTML = eventData.data.messages.map(msg => `<div class="message" id="${msg.ID}">
 <pre>
 ${userStore[msg.userID]?.username ?? msg.userID}・${parseTimestamp(msg.createdAt)}
-${linkifyHtml(msg.content, {target: "_blank"})}
+${DOMPurify.sanitize(linkifyHtml(msg.content, {target: "_blank"}),{ ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['target','href'] })}
 </pre></div>`).join("");
         eventData.data.messages.map(msg => {
             const htmlMsg = document.getElementById(msg.ID);
@@ -122,7 +122,7 @@ function message(eventData){
     messageContainer.innerHTML += `<div class="message">
 <pre>
 ${userStore[eventData.data.userID]?.username ?? eventData.data.userID}・${parseTimestamp(eventData.data.createdAt)}
-${linkifyHtml(eventData.data.content, {target: "_blank"})}
+${DOMPurify.sanitize(linkifyHtml(eventData.data.content, {target: "_blank"}),{ ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['target','href'] })}
 </pre></div>`;
     moveChat();
 }
