@@ -57,6 +57,25 @@ html body {
     overflow-y: auto;
 }
 
+#messages::-webkit-scrollbar {
+    width: 14px;
+}
+
+#messages::-webkit-scrollbar-track {
+    background: hsl(223, 9%, 17%);
+    padding: 2px;
+    border: 3px solid transparent;
+    border-radius: 8px;
+    background-clip: content-box;
+}
+
+#messages::-webkit-scrollbar-thumb {
+    background: #1a1b1e;
+    border: 3px solid transparent;
+    border-radius: 8px;
+    background-clip: content-box;
+}
+
 #user-list {
     flex: 1;
     background-color: #36393F;
