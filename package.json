@@ -13,8 +13,7 @@
     "typescript": "^5.3.3"
   },
   "scripts": {
-    "build": "tsc --build && npm run copyhtml && npm run copysecrets",
-    "copyhtml": "shx cp -r ./src/html/pages ./src/html/scripts ./src/html/styles ./dist/html",
+    "build": "tsc --build && npm run copysecrets",
     "copysecrets": "shx cp .env ./dist",
     "buildrun": "npm run build && npm run run",
     "run": "cd dist && node index.js",

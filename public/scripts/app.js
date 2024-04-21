@@ -1,5 +1,5 @@
-const wsURL = "wss://headpat.tentti.xyz/";
-//const wsURL = "ws://localhost:5000"; //This is for local dev, don't mind it.
+//const wsURL = "wss://headpat.tentti.xyz/";
+const wsURL = "wss://hp.dipped.dev"; //This is for local dev, don't mind it.
 let ws = new WebSocket(wsURL);
 ws.onopen = onOpen;
 ws.onmessage = onMessage;
@@ -12,6 +12,7 @@ let userStore = {};
 
 const closeDanger = document.getElementById("close-danger");
 const messageField = document.getElementById("messageField");
+const messageFieldPlaceholder = document.getElementById('messageFieldPlaceholder');
 const messageContainer = document.getElementById("messageContainer");
 const userContainer = document.getElementById("userContainer");
 const userProfile = document.getElementById("user");
@@ -189,18 +190,24 @@ closeDanger.onclick = () => {
     localStorage.setItem("notice", "true");
 };
 
-messageField.addEventListener("keydown", (e)=>{
-    if(e.key === "Enter" && messageField.value.trim().length > 0){
+let keyMap = {}; //A map for what keys are currently pressed for messageField
+messageField.onkeydown = messageField.onkeyup = function(e){
+    keyMap[e.key] = e.type == 'keydown';
+    if(keyMap["Enter"] && !keyMap["Shift"]) {
+        e.preventDefault();
+        if(messageField.innerText.replace(/^\s+|\s+$/g, "").length < 1) {
+            return alert("Message cannot be empty.")
+        }
         ws.send(JSON.stringify({
             opCode: "MSG",
             data: {
-                content: messageField.value
+                content: messageField.innerText.replace(/^\s+|\s+$/g, "")
             }
         }));
-        messageField.value = "";
+        messageField.innerText = "";
         moveChat();
     }
-});
+}
 
 function deleteMessage(){
     const ctxMenu = document.getElementById("messageCtx");

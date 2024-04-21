@@ -12,7 +12,7 @@ import {updatePass} from "./authmanager";
 
 let server;
 //Remember to increment this when publishing an update to enforce a reload of clients.
-const version = "1.0.2_101";
+const version = "1.0.2_102";
 
 const init = (srv)=>{
     server = new WebSocketServer({

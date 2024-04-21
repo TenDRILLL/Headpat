@@ -7,7 +7,7 @@ const app = express();
 const port: number = parseInt(process.env.PORT as string);
 
 app.set("view engine", "ejs");
-app.set("views", "./html/pages");
+app.set("views", "../public/pages");
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({

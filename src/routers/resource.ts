@@ -5,7 +5,7 @@ import {readDatabase} from "../automation/database";
 const resourceRouter = Router();
 
 resourceRouter.get("/user/:userId/", async (req, res)=>{
-    return res.sendFile("tmp.png", {root: `${__dirname}/../html/styles/`});
+    return res.sendFile("tmp.png", {root: `${__dirname}/../../public/styles/`});
     //This isn't implemented yet. Just thoughts
     /*if(req.params.userId === undefined){
         return res.status(400);
@@ -20,12 +20,12 @@ resourceRouter.get("/:resourceName", (req, res)=>{
     if(req.params.resourceName === undefined){
         return res.status(400);
     }
-    const styles = readdirSync("./html/styles");
-    const scripts = readdirSync("./html/scripts");
+    const styles = readdirSync("../public/styles");
+    const scripts = readdirSync("../public/scripts");
     if(styles.includes(req.params.resourceName)){
-        res.sendFile(req.params.resourceName, {root: `${__dirname}/../html/styles/`});
+        res.sendFile(req.params.resourceName, {root: `${__dirname}/../../public/styles/`});
     } else if (scripts.includes(req.params.resourceName)) {
-        res.sendFile(req.params.resourceName, {root: `${__dirname}/../html/scripts/`});
+        res.sendFile(req.params.resourceName, {root: `${__dirname}/../../public/scripts/`});
     } else {
         return res.status(404);
     }

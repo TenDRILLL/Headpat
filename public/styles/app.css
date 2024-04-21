@@ -1,9 +1,15 @@
 html body {
+    min-height: 100vh;
     color: rgb(209, 205, 199);
     background-color: #36393F !important;
     -webkit-tap-highlight-color: transparent;
     margin: 0;
     padding: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
 }
 
 .navbar {
@@ -19,7 +25,7 @@ html body {
 }
 
 .callout-danger {
-    z-index: 100;
+    z-index: 999;
     color: rgba(255, 255, 255, 1);
     background-color: rgba(67, 12, 17, 0.9);
     border-color: rgba(106, 17, 26, 0.9);
@@ -31,11 +37,11 @@ html body {
     float: right;
 }
 
-#messages::-webkit-scrollbar {
+#messageContainer::-webkit-scrollbar {
     width: 14px;
 }
 
-#messages::-webkit-scrollbar-track {
+#messageContainer::-webkit-scrollbar-track {
     background: hsl(223, 9%, 17%);
     padding: 2px;
     border: 3px solid transparent;
@@ -43,12 +49,31 @@ html body {
     background-clip: content-box;
 }
 
-#messages::-webkit-scrollbar-thumb {
+#messageContainer::-webkit-scrollbar-thumb {
     background: #1a1b1e;
     border: 3px solid transparent;
     border-radius: 8px;
     background-clip: content-box;
 }
+
+#messageField::-webkit-scrollbar {
+    width: 10px;
+}
+
+#messageField::-webkit-scrollbar-track {
+    padding: 2px;
+    border: 3px solid transparent;
+    border-radius: 8px;
+    background-clip: content-box;
+}
+
+#messageField::-webkit-scrollbar-thumb {
+    background: hsl(225, 7%, 14%);
+    border: 3px solid transparent;
+    border-radius: 8px;
+    background-clip: content-box;
+}
+
 
 .channel {
     margin-bottom: 10px;
@@ -65,14 +90,16 @@ html body {
 
 .text-input {
     border: none;
-    border-radius: 5px;
-    background-color: #40444B;
     color: #FFFFFF;
-    margin-top: 10px;
+    padding: 10px;
     outline: none;
     box-sizing: border-box;
     bottom: 10px;
-    width: 1400px;
+    width: 100%;
+    background-clip: padding-box;
+    resize: none;
+    max-height: 45vh;
+    overflow-y: auto;
 }
 
 .OFFLINE {
@@ -197,7 +224,8 @@ pre {
 }
 
 .flex-container {
-    height: 810px;
+    height: 1px;
+    flex-grow: 1;
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
@@ -206,14 +234,9 @@ pre {
     align-content: stretch;
 }
 
-.flex-container2 {
-    height: 50px;
+#left-container {
     display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    align-items: stretch;
-    align-content: stretch;
+    flex-direction: column;
 }
 
 .flex-items {
@@ -223,7 +246,7 @@ pre {
     flex-basis: auto;
     align-self: auto;
     order: 0;
-//border: red 1px solid;
+    /* border: red 1px solid; */
 }
 
 #servers {
@@ -239,21 +262,30 @@ pre {
 }
 
 #messages {
-    width: 1400px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 240px;
     background-color: #2F3136;
-    padding: 10px;
     color: #FFFFFF;
+    overflow: hidden;
+}
+#messageContainer {
+    padding: 10px 10px 0;
+    width: 100%;
+    max-height: 100%;
+    flex-grow: 1;
     overflow-y: scroll;
     overflow-wrap: break-word;
 }
 
 #user-list {
-    width: 260px;
+    min-width: 200px;
     background-color: #36393F;
 }
 
 #user {
-    width: 260px;
+    width: 100%;
     background-color: #121315;
     display: flex;
 }
@@ -263,6 +295,41 @@ pre {
 }
 
 #messagesender {
-    width: 1400px;
+    border: 5px solid transparent;
+    border-radius: 10px;
+    background-clip: content-box;
+    position: relative;
     background-color: #40444B;
+}
+
+#messageField {
+    position: relative;
+    bottom: 0;
+}
+
+#messageField + #messageFieldPlaceholder {
+    display: none;
+}
+
+#messageField:empty + #messageFieldPlaceholder {
+    display: block;
+}
+
+#messageFieldPlaceholder {
+    position: absolute;
+    pointer-events: none;
+    background: transparent;
+    bottom: 0;
+    color: #808080;
+    z-index: 0;
+}
+
+@media screen and (max-width: 720px) {
+    /* #left-container {
+        display: none;
+    }
+
+    #user-list {
+        display: none;
+    } */
 }
