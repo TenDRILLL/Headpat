@@ -1,5 +1,5 @@
-//const wsURL = "wss://headpat.tentti.xyz/";
-const wsURL = "wss://hp.dipped.dev"; //This is for local dev, don't mind it.
+const wsURL = `wss://${location.host}`;
+//const wsURL = `ws://${location.host}`; //for local dev
 let ws = new WebSocket(wsURL);
 ws.onopen = onOpen;
 ws.onmessage = onMessage;
@@ -54,7 +54,6 @@ function onMessage(event){
             document.getElementById("username").value = eventData.data.user.username ?? "";
             document.getElementById("discriminator").value = eventData.data.user.discriminator ?? "";
             document.getElementById("email").placeholder = eventData.data.email ?? "";
-
     }
 }
 
@@ -181,14 +180,16 @@ function reconnect() {
     ws.onerror = onError;
 }
 
-if(localStorage.getItem("notice") === "true"){
-    document.getElementById("dangerNotice").remove();
+if(closeDanger) {
+    if(localStorage.getItem("notice") === "true"){
+        document.getElementById("dangerNotice").remove();
+    }
+    
+    closeDanger.onclick = () => {
+        document.getElementById("dangerNotice").remove();
+        localStorage.setItem("notice", "true");
+    };
 }
-
-closeDanger.onclick = () => {
-    document.getElementById("dangerNotice").remove();
-    localStorage.setItem("notice", "true");
-};
 
 let keyMap = {}; //A map for what keys are currently pressed for messageField
 messageField.onkeydown = messageField.onkeyup = function(e){
@@ -196,7 +197,7 @@ messageField.onkeydown = messageField.onkeyup = function(e){
     if(keyMap["Enter"] && !keyMap["Shift"]) {
         e.preventDefault();
         if(messageField.innerText.replace(/^\s+|\s+$/g, "").length < 1) {
-            return alert("Message cannot be empty.")
+            return showToast("Message cannot be empty.", undefined, 5);
         }
         ws.send(JSON.stringify({
             opCode: "MSG",
@@ -262,10 +263,10 @@ document.getElementById("save_profile").onclick = ()=>{
         data
     }));
 }
-document.getElementById("messageContainer").scrollTop = document.getElementById("messageContainer").scrollHeight;
 function moveChat(){
-    let temp = document.getElementById("messageContainer");
-    if((temp.scrollHeight - temp.clientHeight) <= (temp.scrollTop + 10)){
-        temp.scrollTop = temp.scrollHeight;
-    }
+    messageContainer.scrollTo({top: messageContainer.scrollHeight});
 }
+
+setTimeout(function () {
+    messageContainer.scrollTo({top: messageContainer.scrollHeight});
+}, 200);
