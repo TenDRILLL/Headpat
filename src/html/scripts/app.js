@@ -233,6 +233,7 @@ const rightContainer = document.getElementById("rightContainer");
 const leftToggle = document.getElementById("serverChannelListToggle");
 
 if (isMobile) {
+    document.body.style.minHeight = "100%";
     leftContainer.style.display = "none";
     userContainer.style.display = "none";
     leftToggle.style.display = "block";
