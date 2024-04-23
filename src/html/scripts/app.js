@@ -1,24 +1,28 @@
-const wsURL = "wss://headpat.tentti.xyz/";
-//const wsURL = "ws://localhost:5000"; //This is for local dev, don't mind it.
+const wsURL = `ws${location.host.startsWith("localhost")?"":"s"}://${location.host}`;
 let ws = new WebSocket(wsURL);
 ws.onopen = onOpen;
 ws.onmessage = onMessage;
 ws.onclose = onClose;
 ws.onerror = onError;
-let heart;
+let heart, memb;
 let version = "";
 
 let userStore = {};
 
-const closeDanger = document.getElementById("close-danger");
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+const closeDanger = document.getElementById("closeDanger");
 const messageField = document.getElementById("messageField");
+const mobileSend = document.getElementById("mobileSend");
+const messageFieldPlaceholder = document.getElementById('messageFieldPlaceholder');
 const messageContainer = document.getElementById("messageContainer");
-const userContainer = document.getElementById("userContainer");
+const userContainer = document.getElementById("userList");
 const userProfile = document.getElementById("user");
 
 function onOpen(){
     ws.send("");
     heart = setInterval(sendHeartbeat, 5000);
+    memb = setInterval(getMembers,20*1000);
 }
 
 function onMessage(event){
@@ -36,7 +40,9 @@ function onMessage(event){
         case "ACK":
             hideToast();
             clearTimeout(heart);
+            clearTimeout(memb);
             heart = setInterval(sendHeartbeat, 5000);
+            memb = setInterval(getMembers,20*1000);
             if(version === "") {version = eventData.data.version;}
             userProfile.innerHTML = `<img style="float: left; border-radius: 50%;" src="/resource/user/${eventData.data.user.ID}" loading="lazy" width="48" height="48" decoding="async" data-nimg="1" style="color: transparent;">
 <h2 style="float: left;" className="no-select">${eventData.data.user.username}#${eventData.data.user.discriminator??"0"}</h2>`;
@@ -87,6 +93,7 @@ ${DOMPurify.sanitize(linkifyHtml(msg.content, {target: "_blank"}),{ ALLOWED_TAGS
                     ctxMenu["data-messageID"] = msg.ID;
                 },false);
             });
+            moveChat();
             break;
         case "DEL_MSG":
             if("messageID" in eventData.data){
@@ -94,7 +101,7 @@ ${DOMPurify.sanitize(linkifyHtml(msg.content, {target: "_blank"}),{ ALLOWED_TAGS
             }
             break;
         case "UPD_PRF":
-            document.getElementById("user-profile").style.setProperty("display", "none", "important");
+            document.getElementById("userProfile").style.setProperty("display", "none", "important");
 
             document.getElementById("username").value = eventData.data.user.username ?? "";
             document.getElementById("discriminator").value = eventData.data.user.discriminator ?? "";
@@ -152,6 +159,7 @@ function onClose(){
     console.log("Closing connection.");
     ws.close();
     clearInterval(heart);
+    clearInterval(memb);
     showToast("Connection Lost, reconnecting...", true);
     setTimeout(reconnect, 5000);
 }
@@ -164,6 +172,12 @@ function onError(e){
 function sendHeartbeat(){
     ws.send(JSON.stringify({
         opCode: "HRT",
+    }));
+}
+
+function getMembers(){
+    ws.send(JSON.stringify({
+        opCode: "GET_MEM",
     }));
 }
 
@@ -185,16 +199,71 @@ closeDanger.onclick = () => {
     localStorage.setItem("notice", "true");
 };
 
-messageField.addEventListener("keydown", (e)=>{
-    if(e.key === "Enter" && messageField.value.trim().length > 0){
-        ws.send(JSON.stringify({
-            opCode: "MSG",
-            data: {
-                content: messageField.value
-            }
-        }));
-        messageField.value = "";
-        moveChat();
+function sendMessage(message) {
+    if(message.length < 1) {
+        return showToast("Message cannot be empty.", undefined, 5);
+    }
+    ws.send(JSON.stringify({
+        opCode: "MSG",
+        data: {
+            content: message
+        }
+    }));
+    messageField.innerText = "";
+    moveChat();
+}
+
+let keyMap = {}; //A map for what keys are currently pressed for messageField
+messageField.onkeydown = messageField.onkeyup = function(e){
+    keyMap[e.key] = e.type == 'keydown';
+    if(keyMap["Enter"] && !keyMap["Shift"] && !isMobile) {
+        e.preventDefault();
+        sendMessage(messageField.innerText.replace(/^\s+|\s+$/g, ""));
+    }
+    if (!isMobile) return;
+    if (messageField.innerText.replace(/^\s+|\s+$/g, "").length > 0) {
+        messageFieldPlaceholder.style.display = "none";
+    } else {
+        messageFieldPlaceholder.style.display = "block";
+    }
+}
+
+const leftContainer = document.getElementById("leftContainer");
+const rightContainer = document.getElementById("rightContainer");
+const leftToggle = document.getElementById("serverChannelListToggle");
+
+if (isMobile) {
+    leftContainer.style.display = "none";
+    userContainer.style.display = "none";
+    leftToggle.style.display = "block";
+    mobileSend.style.display = "block";
+    mobileSend.addEventListener("click", () => {
+        messageFieldPlaceholder.style.display = "block";
+        sendMessage(messageField.innerText.replace(/^\s+|\s+$/g, ""));
+    });
+    leftToggle.addEventListener("click", () => {
+        if (leftContainer.style.display === "none" || !leftContainer.style.display) {
+            leftContainer.style.display = "flex";
+            rightContainer.style.display = "none";
+        } else {
+            leftContainer.style.display = "none";
+            rightContainer.style.display = "flex";
+        }
+        
+    });
+}
+
+document.getElementById("userListToggle").addEventListener("click", () => {
+    if (userContainer.style.display === "block" || !userContainer.style.display) {
+        if (isMobile) {
+            document.getElementById("messages").style.display = "flex";
+        }
+        userContainer.style.display = "none";
+    } else {
+        if (isMobile) {
+            document.getElementById("messages").style.display = "none";
+        }
+        userContainer.style.display = "block";
     }
 });
 
@@ -209,31 +278,31 @@ function deleteMessage(){
     }))
 }
 
-document.getElementById("logoutbutton").onclick = () =>{
+document.getElementById("logoutButton").onclick = () =>{
     location.href = "/logout";
 };
 
-document.getElementById("user-profile").style.setProperty("display", "none", "important");
+document.getElementById("userProfile").style.setProperty("display", "none", "important");
 document.getElementById("user").onclick = ()=>{
-    document.getElementById("user-profile").style.setProperty("display", "flex", "important");
+    document.getElementById("userProfile").style.setProperty("display", "flex", "important");
 }
 
-document.getElementById("close-profile").onclick = ()=>{
-    document.getElementById("user-profile").style.setProperty("display", "none", "important");
+document.getElementById("closeProfile").onclick = ()=>{
+    document.getElementById("userProfile").style.setProperty("display", "none", "important");
 }
 
-document.getElementById("profile_picture").onclick = ()=>{
+document.getElementById("profilePicture").onclick = ()=>{
     alert("Change PFP is a Work-In-Progress");
 
 }
 
-document.getElementById("save_profile").onclick = ()=>{
-    //const profilePicture = document.getElementById("profile-picture").innerHTML or smth idk yet
+document.getElementById("saveProfile").onclick = ()=>{
+    //const profilePicture = document.getElementById("profilePicture").innerHTML or smth idk yet
     const username = document.getElementById("username").value;
     const discriminator = document.getElementById("discriminator").value;
     const email = document.getElementById("email").value;
-    const oldPass = document.getElementById("old_password").value;
-    const newPass = document.getElementById("new_password").value;
+    const oldPass = document.getElementById("oldPassword").value;
+    const newPass = document.getElementById("newPassword").value;
     const data = {};
     if(username.length > 0) data["username"] = username;
     if(discriminator.length > 0) data["discriminator"] = discriminator;
@@ -251,10 +320,7 @@ document.getElementById("save_profile").onclick = ()=>{
         data
     }));
 }
-document.getElementById("messageContainer").scrollTop = document.getElementById("messageContainer").scrollHeight;
+
 function moveChat(){
-    let temp = document.getElementById("messageContainer");
-    if((temp.scrollHeight - temp.clientHeight) <= (temp.scrollTop + 10)){
-        temp.scrollTop = temp.scrollHeight;
-    }
+    messageContainer.scrollTo({top: messageContainer.scrollHeight});
 }

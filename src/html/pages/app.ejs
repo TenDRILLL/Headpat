@@ -1,5 +1,6 @@
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
     <link href="/resource/app.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <title>Headpat</title>
@@ -15,38 +16,66 @@
 <div id="snackbar"></div>
 <%- include("./message_ctx"); %>
 <div class="callout callout-danger" id="dangerNotice">
-    <button id="close-danger" type="button" class="btn-close" aria-label="Close"></button>
+    <button id="closeDanger" type="button" class="btn-close" aria-label="Close"></button>
     Headpat is Work In Progress. Expect glitches, bugs and faults.<br>
     ~ Ten
 </div>
 <div class="flex-container" id="container">
-    <div class="flex-items" id="servers">
-        <h2 class="no-select">SRVS</h2>
-        <div id="serverContainer">
-            <div class="server">DEV</div>
+    <div id="leftContainer">
+        <div class="flex-container">
+            <div class="flex-items" id="servers">
+                <h2 class="no-select">SRVS</h2>
+                <div id="serverContainer">
+                    <div class="server">DEV</div>
+                </div>
+            </div>
+            <div class="flex-items" id="channels">
+                <h2 class="no-select">Channels</h2>
+                <div id="channelContainer">
+                    <div class="channel" onclick="location.reload()">DEV</div>
+                </div>
+            </div>
+        </div>    
+        <div class="flex-items" id="user">
         </div>
     </div>
-    <div class="flex-items" id="channels">
-        <h2 class="no-select">Channels</h2>
-        <div id="channelContainer">
-            <div class="channel">DEV</div>
+    <div id="rightContainer">
+        <div id="rightNav">
+            <!-- serverChannelListToggle should only show on mobile -->
+            <button id="serverChannelListToggle"><</button>
+            <!-- Channel Name is a placeholder till we add a way to dynamically get the channel name -->
+            <div id="rightNavChannelInfo">
+                <span>#</span>
+                <span id="channelName">Channel Name</span>
+            </div>
+            <div id="rightNavButtons">
+                <button id="userListToggle">
+                    <svg x="0" y="0" aria-hidden="true" role="img" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M14.5 8a3 3 0 1 0-2.7-4.3c-.2.4.06.86.44 1.12a5 5 0 0 1 2.14 3.08c.01.06.06.1.12.1ZM18.44 17.27c.15.43.54.73 1 .73h1.06c.83 0 1.5-.67 1.5-1.5a7.5 7.5 0 0 0-6.5-7.43c-.55-.08-.99.38-1.1.92-.06.3-.15.6-.26.87-.23.58-.05 1.3.47 1.63a9.53 9.53 0 0 1 3.83 4.78ZM12.5 9a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM2 20.5a7.5 7.5 0 0 1 15 0c0 .83-.67 1.5-1.5 1.5a.2.2 0 0 1-.2-.16c-.2-.96-.56-1.87-.88-2.54-.1-.23-.42-.15-.42.1v2.1a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2.1c0-.25-.31-.33-.42-.1-.32.67-.67 1.58-.88 2.54a.2.2 0 0 1-.2.16A1.5 1.5 0 0 1 2 20.5Z" class=""></path>
+                    </svg>
+                </button>
+            </div>
         </div>
-    </div>
-    <div class="flex-items" id="messages">
-        <div id="messageContainer">
+        <div id="channelContentContainer">
+            <div id="messages">
+                <div id="messageContainer">
+                </div>
+                <div class="flex-items" id="messageSender">
+                    <!-- messageFiledPlaceholder should be placed somewhere after messageField -->
+                    <div autocomplete="one-time-code" id="messageField" class="text-input" contenteditable="true"></div>
+                    <!-- mobileSend only shows and only works on mobile -->
+                    <div id="mobileSend">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 100 100">
+                            <path d="M5.1,90.8l7.6-32.9c0.3-1.4,1.5-2.5,3-2.7l42.5-4.4c1.2-0.1,1.2-1.9,0-2.1l-42.5-4.1c-1.5-0.1-2.7-1.2-3-2.6  L5.1,9.2C4.4,6.4,7.4,4.1,10,5.4l83.1,41.6c2.5,1.3,2.5,4.9,0,6.2L10,94.6C7.4,95.9,4.4,93.6,5.1,90.8z"/>
+                        </svg>
+                    </div>
+                    <!-- Channel Name is a placeholder till we add a way to dynamically get the channel name -->
+                    <div id="messageFieldPlaceholder" class="text-input">Message Channel Name</div>
+                </div>
+            </div>
+            <div id="userList">
+            </div>
         </div>
-    </div>
-    <div class="flex-items" id="user-list">
-        <h2 class="no-select">User List</h2>
-        <div id="userContainer">
-        </div>
-    </div>
-</div>
-<div class="flex-container2" id="container2">
-    <div class="flex-items" id="user">
-    </div>
-    <div class="flex-items" id="messagesender">
-        <input type="search" autocomplete="one-time-code" id="messageField" class="text-input" placeholder="Type your message...">
     </div>
 </div>
 <%- include("./user_profile"); %>
