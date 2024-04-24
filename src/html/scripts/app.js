@@ -335,4 +335,7 @@ document.getElementById("saveProfile").onclick = ()=>{
 function moveChat(user){
     if (!user) return messageContainer.scrollTop = messageContainer.scrollHeight;
     if (user === currentUser.ID) messageContainer.scrollTop = messageContainer.scrollHeight;
+    else if (messageContainer.scrollTop + messageContainer.clientHeight + 100 > messageContainer.scrollHeight) {
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
 }
