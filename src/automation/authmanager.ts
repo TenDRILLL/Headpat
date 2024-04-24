@@ -13,6 +13,16 @@ const getAuth = (email): Promise<Auth|null> => {
     });
 }
 
+const getSSOAuth = (ssoID): Promise<Auth|null> => {
+    return new Promise(async (res, rej)=>{
+        const authDB = rawDatabase("auth");
+        for await (const [key, value] of authDB!.iterator()) {
+            if(value.ssoID !== undefined && value.ssoID === ssoID) return res(value as Auth);
+        }
+        return res(null);
+    });
+}
+
 const updatePass = (id, newPass): Promise<boolean> => {
     return new Promise(async (res, rej)=>{
         const auth = await readDatabase("auth",id).catch(e => rej("NO_DATA")) as Auth;
@@ -25,5 +35,6 @@ const updatePass = (id, newPass): Promise<boolean> => {
 
 export {
     getAuth,
-    updatePass
+    updatePass,
+    getSSOAuth
 }

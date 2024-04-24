@@ -8,14 +8,14 @@ const loginRouter = Router();
 
 loginRouter.get("/", (req, res)=>{
     if(req.cookies.auth) return res.redirect("/app");
-    res.render("login.ejs", {});
+    res.render("login.ejs", {domain: `${req.protocol}://${req.get("host")}/oauth/discord`});
 });
 
 loginRouter.post("/", async (req, res)=>{
     const auth = await getAuth(req.body.email);
     if(auth === null) return res.json({error: "INVALID_CREDENTIALS"});
 
-    const validPass = await compare(req.body.password, auth.passHash);
+    const validPass = await compare(req.body.password, auth.passHash!);
     if(!validPass) return res.json({error: "INVALID_CREDENTIALS"});
 
     if(auth.tfaSecret !== "" && !req.body.tfa) return res.json({data: "2FA_REQUIRED"});

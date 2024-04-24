@@ -47,7 +47,6 @@ function onMessage(event){
             userProfile.innerHTML = `<img style="float: left; border-radius: 50%;" src="/resource/user/${eventData.data.user.ID}" loading="lazy" width="48" height="48" decoding="async" data-nimg="1" style="color: transparent;">
 <h2 style="float: left;" className="no-select">${eventData.data.user.username}#${eventData.data.user.discriminator??"0"}</h2>`;
             ws.send(JSON.stringify({opCode: "GET_MEM"}));
-            ws.send(JSON.stringify({opCode: "GET_MSG"}));
             //Intentional fallthrough.
         case "HRT":
             if(eventData.data.version !== version){
@@ -68,6 +67,7 @@ function onMessage(event){
                     userStore[entry.user.ID] = entry.user;
                     userContainer.innerHTML += `<div class="user ${entry.online}" id="${entry.user.ID}">${entry.user.username}</div>`;
                 });
+            ws.send(JSON.stringify({opCode: "GET_MSG"}));
             break;
         case "GET_MSG":
             messageContainer.innerHTML = eventData.data.messages.map(msg => `<div class="message" id="${msg.ID}">
@@ -105,7 +105,6 @@ ${DOMPurify.sanitize(linkifyHtml(msg.content, {target: "_blank"}),{ ALLOWED_TAGS
 
             document.getElementById("username").value = eventData.data.user.username ?? "";
             document.getElementById("discriminator").value = eventData.data.user.discriminator ?? "";
-            document.getElementById("email").placeholder = eventData.data.email ?? "";
             userProfile.innerHTML = `<img style="float: left; border-radius: 50%;" src="/resource/user/${eventData.data.user.ID}" loading="lazy" width="48" height="48" decoding="async" data-nimg="1" style="color: transparent;">
 <h2 style="float: left;" className="no-select">${eventData.data.user.username}#${eventData.data.user.discriminator??"0"}</h2>`;
     }
@@ -301,13 +300,11 @@ document.getElementById("saveProfile").onclick = ()=>{
     //const profilePicture = document.getElementById("profilePicture").innerHTML or smth idk yet
     const username = document.getElementById("username").value;
     const discriminator = document.getElementById("discriminator").value;
-    const email = document.getElementById("email").value;
     const oldPass = document.getElementById("oldPassword").value;
     const newPass = document.getElementById("newPassword").value;
     const data = {};
     if(username.length > 0) data["username"] = username;
     if(discriminator.length > 0) data["discriminator"] = discriminator;
-    if(email.length > 0) data["email"] = email;
     if(newPass.length > 0){
         if(oldPass.length > 0){
             //Complain to user.

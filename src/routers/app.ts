@@ -14,8 +14,7 @@ appRouter.get("/", (req, res)=>{
         const user = await getUser(payload.id);
         const auth: Auth | null = await readDatabase("auth",payload.id) as Auth;
         if(!user || !auth) return res.clearCookie("auth").redirect("/");
-        const email = `${auth.email.substring(0,1)}*******${auth.email.split("@")[0].substring(auth.email.split("@")[0].length-1)}@${auth.email.split("@")[1]}`;
-        res.render("app.ejs", {user, email});
+        res.render("app.ejs", {user});
     }).catch(() => res.clearCookie("auth").redirect("/"));
 });
 
