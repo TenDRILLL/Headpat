@@ -4,7 +4,7 @@ ws.onopen = onOpen;
 ws.onmessage = onMessage;
 ws.onclose = onClose;
 ws.onerror = onError;
-let heart, memb;
+let heart, memb, currentUser;
 let version = "";
 
 let userStore = {};
@@ -18,6 +18,19 @@ const messageFieldPlaceholder = document.getElementById('messageFieldPlaceholder
 const messageContainer = document.getElementById("messageContainer");
 const userContainer = document.getElementById("userList");
 const userProfile = document.getElementById("user");
+
+const messageObserver = new MutationObserver((mut) => {
+    if(mut[0].oldValue === "false") {
+        moveChat();
+        messageObserver.disconnect();
+    }
+});
+
+messageObserver.observe(messageContainer, {
+    subtree: true,
+    attributeFilter: ["loaded"],
+    attributeOldValue: true,
+});
 
 function onOpen(){
     ws.send("");
@@ -43,6 +56,7 @@ function onMessage(event){
             clearTimeout(memb);
             heart = setInterval(sendHeartbeat, 5000);
             memb = setInterval(getMembers,20*1000);
+            currentUser = eventData.data.user;
             if(version === "") {version = eventData.data.version;}
             userProfile.innerHTML = `<img style="float: left; border-radius: 50%;" src="/resource/user/${eventData.data.user.ID}" loading="lazy" width="48" height="48" decoding="async" data-nimg="1" style="color: transparent;">
 <h2 style="float: left;" className="no-select">${eventData.data.user.username}#${eventData.data.user.discriminator??"0"}</h2>`;
@@ -93,7 +107,7 @@ ${DOMPurify.sanitize(linkifyHtml(msg.content, {target: "_blank"}),{ ALLOWED_TAGS
                     ctxMenu["data-messageID"] = msg.ID;
                 },false);
             });
-            moveChat();
+            messageContainer.setAttribute("loaded", "true");
             break;
         case "DEL_MSG":
             if("messageID" in eventData.data){
@@ -131,7 +145,7 @@ function message(eventData){
 ${userStore[eventData.data.userID]?.username ?? eventData.data.userID}・${parseTimestamp(eventData.data.createdAt)}
 ${DOMPurify.sanitize(linkifyHtml(eventData.data.content, {target: "_blank"}),{ ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['target','href'] })}
 </pre></div>`;
-    moveChat();
+    moveChat(eventData.data.userID);
 }
 
 const toast = document.getElementById("snackbar");
@@ -209,7 +223,6 @@ function sendMessage(message) {
         }
     }));
     messageField.innerText = "";
-    moveChat();
 }
 
 let keyMap = {}; //A map for what keys are currently pressed for messageField
@@ -319,6 +332,7 @@ document.getElementById("saveProfile").onclick = ()=>{
     }));
 }
 
-function moveChat(){
-    messageContainer.scrollTo({top: messageContainer.scrollHeight});
+function moveChat(user){
+    if (!user) return messageContainer.scrollTop = messageContainer.scrollHeight;
+    if (user === currentUser.ID) messageContainer.scrollTop = messageContainer.scrollHeight;
 }
