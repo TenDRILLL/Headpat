@@ -84,10 +84,6 @@ body {
     margin-bottom: 10px;
 }
 
-.user {
-    margin-bottom: 5px;
-}
-
 .text-input {
     border: none;
     outline: none;
@@ -98,10 +94,6 @@ body {
     background-clip: padding-box;
     max-height: 40vh;
     overflow-y: auto;
-}
-
-.OFFLINE {
-    color: #808080 !important;
 }
 
 menu {
@@ -243,6 +235,14 @@ pre {
 #leftContainer {
     display: flex;
     flex-direction: column;
+    max-width: 260px;
+}
+
+#user {
+    width: 100%;
+    background-color: #121315;
+    display: flex;
+    cursor: pointer;
 }
 
 #rightContainer {
@@ -258,7 +258,6 @@ pre {
     flex-basis: auto;
     align-self: auto;
     order: 0;
-    /* border: red 1px solid; */
 }
 
 #servers {
@@ -293,19 +292,91 @@ pre {
 }
 
 #userList {
-    padding: 10px;
-    min-width: 200px;
+    padding: 10px 0 10px 10px;
+    width: 240px;
+    max-width: 240px;
+    min-width: 240px;
     background-color: #36393F;
-}
-
-#user {
-    width: 100%;
-    background-color: #121315;
     display: flex;
+    flex-direction: column;
+    overflow-y: scroll;
+    row-gap: 1px;
+    outline: none;
 }
 
-#user:hover {
+#userList::-webkit-scrollbar {
+    width: 10px;
+}
+
+#userList:hover::-webkit-scrollbar {
+    width: 10px;
+}
+
+#userList::-webkit-scrollbar-track {
+    padding: 2px;
+    border: 3px solid transparent;
+    border-radius: 8px;
+    background-clip: content-box;
+}
+
+#userList::-webkit-scrollbar-thumb {
+    background: hsl(225, 7%, 14%);
+    border: 3px solid transparent;
+    border-radius: 8px;
+    background-clip: content-box;
+}
+
+.user {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 5px;
+    user-select: none;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.user:hover {
+    background-color: #40444B;
     cursor: pointer;
+    opacity: 1 !important;
+}
+
+.user img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+.user div {
+    position: absolute;
+    top: 25px;
+    left: 25px;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #36393F;
+    border-radius: 50%;
+}
+
+.user span {
+    align-self: center;
+    padding-left: 4px;
+    font-weight: 500;
+    text-wrap: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user.ONLINE div {
+    background-color: #13923d;
+}
+
+.user.OFFLINE {
+    opacity: 0.5;
+}
+
+.user.OFFLINE div {
+    display: none;
 }
 
 #rightNav {
@@ -321,8 +392,10 @@ pre {
     display: none;
 }
 
-#channelName {
+#rightNavChannelName {
     color: #ffffff;
+    font-weight: bold;
+    font-size: 15px;
 }
 
 #rightNavButtons {
@@ -363,7 +436,6 @@ pre {
     height: 44px;
     aspect-ratio: 1;
     border-left: 1px solid #747474;
-    /* background-color: rgba(0, 255, 255, 0.267); */
     bottom: 0;
     display: none;
     align-items: center;
@@ -391,6 +463,7 @@ pre {
     bottom: 0;
     color: #808080;
     z-index: 0;
+    user-select: none;
 }
 
 @media screen and (max-width: 720px) {

@@ -4,8 +4,9 @@ import {readDatabase} from "../automation/database";
 
 const resourceRouter = Router();
 
-resourceRouter.get("/user/:userId/", async (req, res)=>{
-    return res.sendFile("tmp.png", {root: `${__dirname}/../html/styles/`});
+resourceRouter.get("/user/:userId", async (req, res)=>{
+    if (req.query.size && !["32", "64", "128", "256", "512"].includes(req.query.size as string)) return res.sendFile("TMPx128.png", {root: `${__dirname}/../html/styles/`})
+    return res.sendFile(`TMPx${req.query.size || 128}.png`, {root: `${__dirname}/../html/styles/`});
     //This isn't implemented yet. Just thoughts
     /*if(req.params.userId === undefined){
         return res.status(400);

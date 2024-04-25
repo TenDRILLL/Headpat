@@ -71,16 +71,21 @@ function onMessage(event){
             }
             break;
         case "GET_MEM":
+            function userSort(a, b) {
+                if(a.user.username.toLowerCase() < b.user.username.toLowerCase()) { return -1; }
+                if(a.user.username.toLowerCase() > b.user.username.toLowerCase()) { return 1; }
+                return 0;
+            }
             userContainer.innerHTML = "";
-            eventData.data.memberList
-                .sort((a,b) => {
-                    const x = ["ONLINE","OFFLINE"];
-                    return x.indexOf(a.online) - x.indexOf(b.online);
-                })
-                .forEach(entry => {
-                    userStore[entry.user.ID] = entry.user;
-                    userContainer.innerHTML += `<div class="user ${entry.online}" id="${entry.user.ID}">${entry.user.username}</div>`;
-                });
+            const onlineUsers = eventData.data.memberList.filter((x) => x.online === 'ONLINE').sort(userSort).map((entry) => {
+                userStore[entry.user.ID] = entry.user;
+                userContainer.innerHTML += `<div class="user ${entry.online}" id="${entry.user.ID}"><img src="/resource/user/${entry.user.ID}?size=32" loading="lazy"><div></div><span>${entry.user.username}</span></div>`;
+            });
+            const offlineUsers = eventData.data.memberList.filter((x) => x.online === 'OFFLINE').sort(userSort).map(entry => {
+                userStore[entry.user.ID] = entry.user;
+                userContainer.innerHTML += `<div class="user ${entry.online}" id="${entry.user.ID}"><img src="/resource/user/${entry.user.ID}?size=32" loading="lazy"><div></div><span>${entry.user.username}</span></div>`;
+            });
+            console.log(onlineUsers, offlineUsers)
             ws.send(JSON.stringify({opCode: "GET_MSG"}));
             break;
         case "GET_MSG":
@@ -245,7 +250,11 @@ const leftToggle = document.getElementById("serverChannelListToggle");
 if (isMobile) {
     document.body.style.minHeight = "100%";
     leftContainer.style.display = "none";
+    leftContainer.style.maxWidth = "100vw";
     userContainer.style.display = "none";
+    userContainer.style.width = "100%";
+    userContainer.style.minWidth = "100%";
+    userContainer.style.maxWidth = "100vh";
     leftToggle.style.display = "block";
     mobileSend.style.display = "block";
     mobileSend.addEventListener("click", () => {
