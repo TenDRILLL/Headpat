@@ -213,9 +213,7 @@ closeDanger.onclick = () => {
 };
 
 function sendMessage(message) {
-    if(message.length < 1) {
-        return showToast("Message cannot be empty.", undefined, 5);
-    }
+    if(message.length < 1) return;
     ws.send(JSON.stringify({
         opCode: "MSG",
         data: {
