@@ -82,9 +82,10 @@ function onMessage(event){
                 userContainer.innerHTML += `<span>${role.toUpperCase()}・${roles[role].length}</span>`;
                 roles[role].map((entry) => {
                     userStore[entry.user.ID] = entry.user;
-                    const popupUser = document.getElementById('userPopup').getAttribute('data-user');
+                    const popup = document.getElementById('userPopup');
+                    const cssActive = popup.getAttribute('data-user') === entry.user.ID && popup.getAttribute('openedBy') !== 'user' ? 'true' : '';
                     userContainer.innerHTML += `
-                    <div css-active="${popupUser === entry.user.ID ? 'true' : ''}" class="user ${entry.online} exitable" id="${entry.user.ID}" onclick="openUserPopup('${entry.user.ID}', this)">
+                    <div css-active="${cssActive}" class="user ${entry.online} exitable" id="${entry.user.ID}" onclick="openUserPopup('${entry.user.ID}', this)">
                     <img src="/resource/user/${entry.user.ID}?size=32"><div class="userStatus"></div><span>${entry.user.username}</span>
                     </div>`;
                 });
@@ -106,6 +107,7 @@ function onMessage(event){
             document.getElementById("userPopupDiscriminator").value = eventData.data.user.discriminator ?? "";
             userProfile.innerHTML = `<img class="exitable" src="/resource/user/${eventData.data.user.ID}?size=64">
             <h2 class="exitable" style="float: left;">${eventData.data.user.username}#${eventData.data.user.discriminator??"0"}</h2>`;
+            showToast('Profile Saved', false, 2.5);
     }
 }
 
@@ -294,9 +296,19 @@ document.getElementById("logoutButton").onclick = () => location.href = "/logout
 
 userProfile.onclick = () => openUserPopup(currentUser.ID, userProfile, true);
 
+window.onresize = () => {
+    closePopup();
+};
+
 function closePopup(element) {
     const popup = document.getElementById(`userPopup`);
     if (popup.style.display === 'none') return;
+    // element should only be excluded when window is resized
+    if (!element) { 
+        popup.style.display = 'none';
+        document.querySelectorAll('[css-active="true"]').forEach((e) => e.setAttribute('css-active', 'false'));
+        return;
+    }
     const ecl = element.classList;
     const parent = element.parentElement.classList;
     if (ecl.contains('exitable') || parent.contains('exitable') || element.id.includes('userPopup') || ecl.toString().includes('userPopup') || parent.toString().includes('userPopup')) return;
@@ -320,7 +332,7 @@ function openUserPopup(userID, element, editable) {
     const userStatus = document.getElementById(userID).classList.toString().replace('user ', '').replace(' exitable', '')
 
     if (userID === currentUser.ID && editable) {
-        popupEditable.style.display = 'block';
+        popupEditable.style.display = 'flex';
         popupNonEditable.style.display = 'none';
         const avatar = document.getElementById(`userPopupAvatarEditable`);
         //const banner = document.getElementById(`userPopupBannerEditable`);
@@ -332,13 +344,13 @@ function openUserPopup(userID, element, editable) {
         const newPassword = document.getElementById(`userPopupNewPassword`);
         const saveButton = document.getElementById(`saveProfile`);
         status.classList.add(userStatus);
+        status.classList.remove(userStatus === 'ONLINE' ? 'OFFLINE' : 'ONLINE');
+        avatar.src = `/resource/user/${userID}?size=128`
         avatar.addEventListener("click", () => {
             showToast("Change PFP is a Work-In-Progress", false, 5);
         });
         saveButton.addEventListener("click", () => {
             const data = {};
-            //set avatar to new avatar (for future use)
-            // avatar.src = `/resource/user/${userID}?size=64`;
             if(usernameInput.value.length > 0) data["username"] = usernameInput.value;
             if(discriminatorInput.value.length > 0) data["discriminator"] = discriminatorInput.value;
             if(newPassword.value.length > 0){
@@ -353,15 +365,16 @@ function openUserPopup(userID, element, editable) {
         });
     } else {
         popupEditable.style.display = 'none';
-        popupNonEditable.style.display = 'block';
+        popupNonEditable.style.display = 'flex';
         const avatar = document.getElementById(`userPopupAvatar`);
         //const banner = document.getElementById(`userPopupBanner`);
         const username = document.getElementById(`userPopupUsername`);
         const discriminator = document.getElementById(`userPopupDiscriminator`);
         const joined = document.getElementById(`userPopupJoined`);
         const status = document.getElementById(`userPopupStatus`);
-        avatar.src = `/resource/user/${userID}?size=64`;
+        avatar.src = `/resource/user/${userID}?size=128`;
         status.classList.add(userStatus);
+        status.classList.remove(userStatus === 'ONLINE' ? 'OFFLINE' : 'ONLINE');
         username.innerHTML = user.username ?? "Nya";
         discriminator.innerHTML = user.discriminator ?? "0000";
         joined.innerHTML = parseTimestamp(user.createdAt);
@@ -374,12 +387,18 @@ function openUserPopup(userID, element, editable) {
     if (element.id === 'user') {
         //position popup above element if element is the current user profile
         popup.style.bottom = document.body.clientHeight - elementData.top + 10 + 'px';
+        popupData = popup.getBoundingClientRect();
+        if (popupData.top < 0) popup.style.top = '10px';
         popup.style.left = '10px';
     } else if (element.classList.contains('user')) {
         //position popup to the left of element if element is a user from the member list
         popup.style.top = elementData.top + 'px';
         popupData = popup.getBoundingClientRect();
-        if (popupData.bottom > document.body.clientHeight) popup.style.top = (elementData.top - (popupData.bottom - document.body.clientHeight)) - 5 + 'px';
+        if (popupData.bottom > document.body.clientHeight) popup.style.top = (elementData.top - (popupData.bottom - document.body.clientHeight)) - 10 + 'px';
+        if (popupData.top < 0) {
+            popup.style.bottom = '10px';
+            popup.style.top = '10px';
+        };
         popup.style.left = (elementData.left - popupData.width) - 10 + 'px';
     } else {
         //position popup to the right of element hopefully only if element is a chat username

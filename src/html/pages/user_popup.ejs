@@ -1,7 +1,7 @@
 <div id="userPopupBackground" style="display: none;"></div>
 <div id="userPopup" style="display: none;">
     <!-- Only shows when you are looking at a users profile -->
-    <div id="userPopupNonEditable" style="display: none;">
+    <div id="userPopupNonEditable" class="userPopupMain" style="display: none;">
         <div class="userPopupTop">
             <img id="userPopupBanner" class="userPopupBanner" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" />
             <img id="userPopupAvatar" class="userPopupAvatar" />
@@ -13,13 +13,12 @@
                 <span>#</span>
                 <div id="userPopupDiscriminator"></div>
             </div>
-            <span>Member Since</span>
+            <span class="sectionHeader">Member Since</span>
             <span id="userPopupJoined"></span>
         </div>
     </div>
     <!-- Only shows when you are editing your profile -->
-    <div id="userPopupEditable" style="display: none;">
-        <h2>Edit Profile</h2>
+    <div id="userPopupEditable" class="userPopupMain" style="display: none;">
         <div class="userPopupTop">
             <input id="userPopupAvatarInput" type="file">
             <input id="userPopupAvatarInput" type="file">
@@ -28,13 +27,13 @@
             <div id="userPopupStatusEditable" class="userPopupStatus" ></div>
         </div>
         <div class="userPopupBottom">
-            <span>Username</span>
+            <span class="sectionHeader">Username</span>
             <input id="userPopupUsernameInput" placeholder="Username" value="<%= user.username ?? "" %>"></input>
-            <span>Discriminator</span>
+            <span class="sectionHeader">Discriminator</span>
             <input id="userPopupDiscriminatorInput" placeholder="Discriminator" value="<%= user.discriminator ?? "" %>"></input>
-            <!-- <span>Email</span>
+            <!-- <span class="sectionHeader">Email</span>
             <input id="userPopupEmail" placeholder="Email"></input> -->
-            <span>Password</span>
+            <span class="sectionHeader">Password</span>
             <input id="userPopupOldPassword" placeholder="Old Password"></input>
             <input id="userPopupNewPassword" placeholder="New Password"></input>
             <a href="#" id="saveProfile" class="btn btn-success no-select">Save</a>
