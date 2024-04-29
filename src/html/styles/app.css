@@ -253,12 +253,6 @@ pre {
     position: relative;
 }
 
-#user #userProfile {
-    position: absolute !important;
-    left: 0;
-    bottom: 100%;
-}
-
 #user>img {
     float: left; 
     border-radius: 50%;

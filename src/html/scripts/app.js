@@ -134,7 +134,6 @@ ${DOMPurify.sanitize(linkifyHtml(data.content, {target: "_blank"}),{ ALLOWED_TAG
 }
 
 function openMessageContext(event, element) {
-    event.preventDefault();
     const ctxMenu = document.getElementById("messageCtx");
     if(ctxMenu["data-messageID"] === element.id){
         ctxMenu.style = "";
@@ -163,6 +162,10 @@ document.onclick = (event) => {
     ctxMenu.style = "";
     ctxMenu["data-messageID"] = "";
     closePopup(event.target);
+};
+
+document.oncontextmenu = (event) => {
+    event.preventDefault();
 };
 
 function onClose(){
