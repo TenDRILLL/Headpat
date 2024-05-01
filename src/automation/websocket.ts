@@ -8,7 +8,7 @@ import {hasConnection, setConnection} from "./connectionmanager";
 
 let server;
 //Remember to increment this when publishing an update to enforce a reload of clients.
-const version = "1.0.4_000";
+const version = "1.1.4_010";
 
 const init = async (srv)=>{
     const events = await loadWebsocketEvents();
