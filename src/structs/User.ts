@@ -1,9 +1,5 @@
-export default class User {
-    ID: string;
-    username: string;
-    profilePicture?: string;
-    discriminator?: string;
-    role: string;
-    createdAt: string;
+import Member from "./Member";
+
+export default class User extends Member {
     servers: string[];
 }

@@ -58,7 +58,11 @@ const init = async (srv)=>{
                 opCode: "ACK",
                 data: {
                     user,
-                    version
+                    version,
+                    state: {
+                        currentServer: ws.currentServer,
+                        currentChannel: ws.currentChannel
+                    }
                 }
             }));
         }).catch((e) => {

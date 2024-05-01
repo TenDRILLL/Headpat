@@ -12,10 +12,11 @@ let userStore = {};
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 const closeDanger = document.getElementById("closeDanger");
+const messageSender = document.getElementById("messageSender");
 const messageField = document.getElementById("messageField");
 const mobileSend = document.getElementById("mobileSend");
 const messageFieldPlaceholder = document.getElementById('messageFieldPlaceholder');
-const messageContainer = document.getElementById("messageContainer");
+const messageContainer = document.getElementById("messagesContainer");
 const userContainer = document.getElementById("userList");
 const userProfile = document.getElementById("user");
 
@@ -58,9 +59,9 @@ function onMessage(event){
             memb = setInterval(getMembers, 20_000);
             currentUser = eventData.data.user;
             if(version === "") {version = eventData.data.version;}
-            userProfile.innerHTML = `<img class="exitable" src="/resource/user/${eventData.data.user.ID}?size=64">
-            <h2 class="exitable" style="float: left;">${eventData.data.user.username}#${eventData.data.user.discriminator??"0"}</h2>`;
+            setUserProfile(eventData.data.user);
             ws.send(JSON.stringify({opCode: "GET_MEM"}));
+            ws.send(JSON.stringify({opCode: "GET_SER"}));
             //Intentional fallthrough.
         case "HRT":
             if(eventData.data.version !== version){
@@ -83,7 +84,7 @@ function onMessage(event){
                 roles[role].map((entry) => {
                     userStore[entry.user.ID] = entry.user;
                     const popup = document.getElementById('userPopup');
-                    const cssActive = popup.getAttribute('data-user') === entry.user.ID && popup.getAttribute('openedBy') !== 'user' ? 'true' : '';
+                    const cssActive = popup.getAttribute('data-user') === entry.user.ID && popup.getAttribute('openedBy') !== 'user' && !popup.getAttribute('openedBy').includes('_') ? 'true' : '';
                     userContainer.innerHTML += `
                     <div css-active="${cssActive}" class="user ${entry.online} exitable" id="${entry.user.ID}" onclick="openUserPopup('${entry.user.ID}', this)">
                     <img src="/resource/user/${entry.user.ID}?size=32"><div class="userStatus"></div><span>${entry.user.username}</span>
@@ -94,8 +95,11 @@ function onMessage(event){
             break;
         case "GET_MSG":
             messageContainer.innerHTML = '';
-            eventData.data.messages.map(msg => message(msg));
+            eventData.data.messages.map((msg, index) => message(msg, false, eventData.data.messages[index === 0 ? 0 : index - 1]));
             messageContainer.setAttribute("loaded", "true");
+            break;
+        case "GET_SER":
+            document.getElementById('serverNameSpan').innerText = eventData.data.server.name;
             break;
         case "DEL_MSG":
             if("messageID" in eventData.data){
@@ -105,34 +109,77 @@ function onMessage(event){
         case "UPD_PRF":
             document.getElementById("userPopupUsername").value = eventData.data.user.username ?? "";
             document.getElementById("userPopupDiscriminator").value = eventData.data.user.discriminator ?? "";
-            userProfile.innerHTML = `<img class="exitable" src="/resource/user/${eventData.data.user.ID}?size=64">
-            <h2 class="exitable" style="float: left;">${eventData.data.user.username}#${eventData.data.user.discriminator??"0"}</h2>`;
+            setUserProfile(eventData.data.user);
             showToast('Profile Saved', false, 2.5);
     }
 }
 
-function parseTimestamp(timestamp){
+function setUserProfile(user) {
+    userProfile.innerHTML = `<img class="exitable" src="/resource/user/${user.ID}?size=64">
+    <div class="exitable" style="float: left;"><span id="userUsername">${user.username}</span><span id="userDiscriminator">#${user.discriminator??"0"}</span></div>`;
+}
+
+function parseTimestamp(timestamp, type){
     const msgTime = new Date(parseInt(timestamp));
     const now = new Date();
     const clock = `${msgTime.getHours().toString().padStart(2,"0")}:${msgTime.getMinutes().toString().padStart(2,"0")}`;
     const calendar = `${msgTime.getDate().toString().padStart(2,"0")}/${(msgTime.getMonth() + 1).toString().padStart(2,"0")}/${msgTime.getFullYear()}`;
-    if(now.getTime() - msgTime.getTime() < 1000*60*60*24 && now.getDate() === msgTime.getDate()){
-        return `Today at ${clock}`;
-    } else if(now.getTime() - msgTime.getTime() < 1000*60*60*24*2 && now.getDate() !== msgTime.getDate()){
-        return `Yesterday at ${clock}`;
+    if (type === 'full') {
+        if(now.getTime() - msgTime.getTime() < 1000*60*60*24 && now.getDate() === msgTime.getDate()){
+            return `Today at ${clock}`;
+        } else if(now.getTime() - msgTime.getTime() < 1000*60*60*24*2 && now.getDate() !== msgTime.getDate()){
+            return `Yesterday at ${clock}`;
+        } else {
+            return `${calendar} ${clock}`;
+        }
+    } else if (type === 'clock') {
+        return `${clock}`;
+    } else if (type == 'calendar') {
+        return `${calendar}`;
     } else {
-        return `${calendar} ${clock}`;
+        return parseTimestamp(timestamp, 'full');
     }
+
 }
 
-function message(data, scroll){
+function message(data, scroll, previousMessage){
     if(data.error) return console.error(data.error);
-    messageContainer.innerHTML += `<div class="message" id="${data.ID}" oncontextmenu="openMessageContext(event, this)">
-<pre>
-${userStore[data.userID]?.username ?? data.userID}・${parseTimestamp(data.createdAt)}
-${DOMPurify.sanitize(linkifyHtml(data.content, {target: "_blank"}),{ ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['target','href'] })}
-</pre></div>`;
+    if (!previousMessage) previousMessage = {
+        ID: "0",
+        userID: messageContainer.children[messageContainer.children.length - 1].children[0].getAttribute('data-user'),
+        createdAt: messageContainer.children[messageContainer.children.length - 1].children[0].getAttribute('data-time')
+    }
+    if (data.ID !== previousMessage.ID  && data.userID === previousMessage.userID && +previousMessage.createdAt + 300_000 > +data.createdAt) {
+        messageContainer.innerHTML += `<div class="message" id="${data.ID}" oncontextmenu="openMessageContext(event, this)">
+        <div style="display:none;" data-user="${data.userID}" data-time="${data.createdAt}"></div><span class="messageTimeSentAside">${parseTimestamp(data.createdAt, 'clock')}</span>
+        <div class="messageContainer"></div></div>`;
+        document.getElementById(`${data.ID}`).children[2].innerHTML += `<pre>${formatContent(data.content, data)}</pre>`;
+    } else {
+        const popup = document.getElementById('userPopup');
+        const cssActive = popup.getAttribute('data-user') === data.userID && popup.getAttribute('openedBy') === `messageUsername_${data.ID}` || popup.getAttribute('openedBy') === `messageAvatar_${data.ID}` ? 'true' : '';
+        messageContainer.innerHTML += `<div class="message" id="${data.ID}" oncontextmenu="openMessageContext(event, this)">
+        <div style="display:none;" data-user="${data.userID}" data-time="${data.createdAt}"></div>
+        <img css-active="${cssActive}" id="messageAvatar_${data.ID}" class="messageAvatar" src="/resource/user/${data.userID}?size=32" onclick="openUserPopup('${data.userID}', this)" />
+        <div class="messageContainer"><span id="messageUsername_${data.ID}" class="messageUsername" onclick="openUserPopup('${data.userID}', this)">${userStore[data.userID]?.username ?? data.userID}</span>
+        <span class="messageTimeSent">${parseTimestamp(data.createdAt)}</span></div></div>`;
+        document.getElementById(`${data.ID}`).children[2].innerHTML += `<pre>${formatContent(data.content, data)}</pre>`;
+    }
     if (scroll && scroll === true) moveChat(data.userID);
+}
+
+function formatContent(content, message) {
+    content = DOMPurify.sanitize(linkifyHtml(content, {target: "_blank"}),{ ALLOWED_TAGS: ['a'], ALLOWED_ATTR: ['target','href'] });
+    const mentionRgx = /&lt;@[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}&gt;/gmi;
+    let m;
+    do {
+        m = mentionRgx.exec(content);
+        if (m) {
+            let id = m[0].substring(5,m[0].length-4);
+            if (id === currentUser.ID) document.getElementById(`${message.ID}`).classList.add('mentions-you')
+            content = content.replace(new RegExp(m[0],"g"),`<span id="mention_${id}" class="mention" onclick="openUserPopup('${id}', this)" data-user="${id}">@${userStore[id].username}</span>`);
+        }
+    } while (m);
+    return content;
 }
 
 function openMessageContext(event, element) {
@@ -225,8 +272,30 @@ function sendMessage(message) {
     messageField.innerText = "";
 }
 
+//prevent rich content in messageField
+messageField.addEventListener("paste", e => {
+    e.preventDefault();
+    let text = (e.originalEvent || e).clipboardData.getData('text/plain');
+    insertTextAtSelection(messageField, text);
+});
+
+function insertTextAtSelection(div, txt) {
+    let sel = window.getSelection();
+    let text = div.textContent;
+    let before = Math.min(sel.focusOffset, sel.anchorOffset);
+    let after = Math.max(sel.focusOffset, sel.anchorOffset);
+    let afterStr = text.substring(after);
+    div.textContent = text.substring(0, before) + txt + afterStr;
+    sel.removeAllRanges();
+    let range = document.createRange();
+    range.setStart(div.childNodes[0], before + txt.length);
+    range.setEnd(div.childNodes[0], before + txt.length);
+    sel.addRange(range);
+}
+
 let keyMap = {}; //A map for what keys are currently pressed for messageField
 messageField.onkeydown = messageField.onkeyup = function(e){
+    if (messageContainer.scrollTop + messageContainer.clientHeight + 100 > messageContainer.scrollHeight) moveChat(currentUser.ID);
     keyMap[e.key] = e.type == 'keydown';
     messageField.scrollTop = messageField.scrollHeight;
     if(keyMap["Enter"] && !keyMap["Shift"] && !isMobile) {
@@ -234,10 +303,10 @@ messageField.onkeydown = messageField.onkeyup = function(e){
         sendMessage(messageField.innerText.replace(/^\s+|\s+$/g, ""));
     }
     if (!isMobile) return;
-    if (messageField.innerText.replace(/^\s+|\s+$/g, "").length > 0) {
-        messageFieldPlaceholder.style.display = "none";
-    } else {
+    if (messageField.innerText === '\n' || messageField.innerText.length < 0) {
         messageFieldPlaceholder.style.display = "block";
+    } else {
+        messageFieldPlaceholder.style.display = "none";
     }
 }
 
@@ -304,13 +373,14 @@ function closePopup(element) {
     const popup = document.getElementById(`userPopup`);
     if (popup.style.display === 'none') return;
     // element should only be excluded when window is resized
-    if (!element) { 
+    if (!element) {
         popup.style.display = 'none';
         document.querySelectorAll('[css-active="true"]').forEach((e) => e.setAttribute('css-active', 'false'));
         return;
     }
     const ecl = element.classList;
     const parent = element.parentElement.classList;
+    if (ecl.contains('mention') || ecl.toString().includes('message')) return;
     if (ecl.contains('exitable') || parent.contains('exitable') || element.id.includes('userPopup') || ecl.toString().includes('userPopup') || parent.toString().includes('userPopup')) return;
     document.querySelectorAll('[css-active="true"]').forEach((e) => e.setAttribute('css-active', 'false'));
     popup.setAttribute('data-user', '');
@@ -318,6 +388,16 @@ function closePopup(element) {
 }
 
 function openUserPopup(userID, element, editable) {
+    //clear user selection when popup is opened
+    if (window.getSelection) {
+        if (window.getSelection().empty) {  // Chrome
+            window.getSelection().empty();
+        } else if (window.getSelection().removeAllRanges) {  // Firefox
+            window.getSelection().removeAllRanges();
+        }
+    } else if (document.selection) {  // IE
+        document.selection.empty();
+    }
     const user = userStore[userID];
     if (!user) return console.error('Invalid User.');
     const popup = document.getElementById(`userPopup`);
@@ -335,7 +415,7 @@ function openUserPopup(userID, element, editable) {
         popupEditable.style.display = 'flex';
         popupNonEditable.style.display = 'none';
         const avatar = document.getElementById(`userPopupAvatarEditable`);
-        //const banner = document.getElementById(`userPopupBannerEditable`);
+        const banner = document.getElementById(`userPopupBannerEditable`);
         const status = document.getElementById(`userPopupStatusEditable`);
         const usernameInput = document.getElementById(`userPopupUsernameInput`);
         const discriminatorInput = document.getElementById(`userPopupDiscriminatorInput`);
@@ -348,6 +428,9 @@ function openUserPopup(userID, element, editable) {
         avatar.src = `/resource/user/${userID}?size=128`
         avatar.addEventListener("click", () => {
             showToast("Change PFP is a Work-In-Progress", false, 5);
+        });
+        banner.addEventListener("click", () => {
+            showToast("Change Banner is a Work-In-Progress", false, 5);
         });
         saveButton.addEventListener("click", () => {
             const data = {};
@@ -390,19 +473,15 @@ function openUserPopup(userID, element, editable) {
         popupData = popup.getBoundingClientRect();
         if (popupData.top < 0) popup.style.top = '10px';
         popup.style.left = '10px';
-    } else if (element.classList.contains('user')) {
-        //position popup to the left of element if element is a user from the member list
+    } else {
+        //position popup to the right of element
         popup.style.top = elementData.top + 'px';
         popupData = popup.getBoundingClientRect();
         if (popupData.bottom > document.body.clientHeight) popup.style.top = (elementData.top - (popupData.bottom - document.body.clientHeight)) - 10 + 'px';
-        if (popupData.top < 0) {
-            popup.style.bottom = '10px';
-            popup.style.top = '10px';
-        };
-        popup.style.left = (elementData.left - popupData.width) - 10 + 'px';
-    } else {
-        //position popup to the right of element hopefully only if element is a chat username
-        //for future use
+        popup.style.left = elementData.right + 10 + 'px';
+        //position popup to the left if popup was going to be off screen
+        popupData = popup.getBoundingClientRect();
+        if (popupData.right > document.body.clientWidth) popup.style.left = (elementData.left - popupData.width) - 10 + 'px';
     }
 }
 
