@@ -759,7 +759,7 @@ div:has(> #serverNameContainer) {
 }
 
 .mentions-you {
-    background: rgba(240, 177, 50, 0.1);
+    background: rgba(240, 177, 50, 0.1) !important;
     border-left: 2px solid rgb(240, 177, 50);
 }
 
