@@ -1,0 +1,26 @@
+name: Deploy Headpat
+
+on:
+  push:
+    branches: ["uwu"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: CP files and Build
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          host: ${{ secrets.SSH_IP }}
+          username: ${{ secrets.SSH_USERNAME }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          script: |
+            pm2 stop headpat > /dev/null
+            cd /home/ten/node/headpat
+            git pull origin uwu
+            rm -rf dist
+            mkdir -p dist/html
+            npm run build
+            pm2 start headpat > /dev/null

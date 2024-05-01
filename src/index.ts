@@ -44,6 +44,21 @@ const srv = app.listen(port, ()=>{
 Running at: http://localhost:${port}`);
 });
 
+if(process.env.DISCORD_WEBHOOK !== undefined){
+    (async () => {
+        const rawResponse = await fetch(process.env.DISCORD_WEBHOOK as string, {
+            method: "POST",
+            headers: {
+                "Accept": "application/json",
+                "Content-Type": 'application/json'
+            },
+            body: JSON.stringify({content: "Headpat Production Restarted"})
+        });
+        const content = await rawResponse.json();
+        console.log(content);
+    })();
+}
+
 /* ------------- WEBSOCKET ------------- */
 import {init} from "./automation/websocket";
 init(srv);
