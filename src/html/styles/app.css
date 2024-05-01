@@ -287,6 +287,7 @@ pre {
 
 #serverList {
     width: 72px;
+    max-width: 72px;
     background-color: var(--bg-1);
     display: flex;
     overflow-y: scroll;
