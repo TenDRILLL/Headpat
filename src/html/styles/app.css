@@ -918,14 +918,3 @@ div:has(> #serverNameContainer) {
         width: auto;
     }
 }
-
-.me-mention {
-    background: rgba(250, 166, 26, .2);
-    color: rgba(255, 183, 0, 0.98);
-    border-radius: 5px;
-}
-
-.mention {
-    background: #434db4;
-    border-radius: 5px;
-}
