@@ -53,7 +53,7 @@ body {
     padding-bottom: .5rem;
 }
 
-.navbar > div {
+.navbar>div {
     display: flex;
     flex-wrap: inherit;
     align-items: center;
@@ -319,7 +319,7 @@ pre {
     flex-grow: 1;
 }
 
-#leftContainer > div {
+#leftContainer>div {
     display: flex;
     height: 1px;
     flex-grow: 1;
@@ -487,7 +487,7 @@ div:has(> #serverNameContainer) {
 }
 
 #user>img {
-    float: left; 
+    float: left;
     border-radius: 50%;
     width: 42px;
     aspect-ratio: 1;
@@ -531,7 +531,7 @@ div:has(> #serverNameContainer) {
 }
 
 .userPopupMain {
-    height: 100%; 
+    height: 100%;
     flex-direction: column;
 }
 
@@ -688,7 +688,7 @@ div:has(> #serverNameContainer) {
     display: flex;
     flex-direction: column;
     width: 100%;
-    min-width: 240px;
+    max-width: calc(100vw - 552px);
     background-color: var(--bg-4);
     color: #FFFFFF;
     overflow: hidden;
@@ -783,6 +783,15 @@ div:has(> #serverNameContainer) {
 .message pre {
     font-size: 16px;
     margin: 0;
+    overflow-wrap: break-word;
+    text-wrap: wrap;
+}
+
+.message pre img {
+    display: block;
+    max-height: 350px;
+    max-width: min(550px, 100%);
+    border-radius: 6px;
 }
 
 .mention {
@@ -834,16 +843,16 @@ div:has(> #serverNameContainer) {
     cursor: pointer;
 }
 
-#mobileSend > svg {
+#mobileSend>svg {
     padding: 10px;
     transform: translateY(-2px) translateX(2px) rotate(-45deg);
 }
 
-#messageField ~ #messageFieldPlaceholder {
+#messageField~#messageFieldPlaceholder {
     display: none;
 }
 
-#messageField:empty ~ #messageFieldPlaceholder {
+#messageField:empty~#messageFieldPlaceholder {
     display: block;
 }
 
