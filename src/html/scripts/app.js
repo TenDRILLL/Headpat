@@ -27,11 +27,7 @@ const messageObserver = new MutationObserver((mut) => {
     }
 });
 
-messageObserver.observe(messageContainer, {
-    subtree: true,
-    attributeFilter: ["loaded"],
-    attributeOldValue: true,
-});
+messageObserver.observe(messageContainer, {subtree: true, attributeFilter: ["loaded"], attributeOldValue: true});
 
 function onOpen(){
     ws.send("");
@@ -58,9 +54,14 @@ function onMessage(event){
             clearTimeout(memb);
             heart = setInterval(sendHeartbeat, 5000);
             memb = setInterval(getMembers, 20_000);
+            //needed to get currentUser, currentServer and currentChannel from other files
+            document.headpat = {};
             currentUser = eventData.data.user;
+            document.headpat["currentUser"] = eventData.data.user;
             currentServer = eventData.data.state.currentServer;
+            document.headpat["currentServer"] = eventData.data.state.currentServer;
             currentChannel = eventData.data.state.currentChannel;
+            document.headpat["currentChannel"] = eventData.data.state.currentChannel;
             if(version === "") {version = eventData.data.version;}
             setUserProfile(eventData.data.user);
             ws.send(JSON.stringify({opCode: "GET_MEM"}));
@@ -69,9 +70,7 @@ function onMessage(event){
         case "HRT":
             if(eventData.data.version !== version){
                 showToast("Version out of date, reloading in 5 seconds...");
-                return setTimeout(()=>{
-                    location.reload();
-                }, 5000);
+                return setTimeout(() => location.reload(), 5000);
             }
             break;
         case "GET_MEM":
@@ -83,13 +82,14 @@ function onMessage(event){
             const offlineUsers = eventData.data.memberList.filter((x) => x.online === 'OFFLINE').sort(userSort);
             const roles = {ONLINE: onlineUsers, OFFLINE: offlineUsers};
             for (const role of Object.keys(roles)) {
-                userContainer.innerHTML += `<span>${role.toUpperCase()}・${roles[role].length}</span>`;
+                userContainer.innerHTML += `<span>${role.toUpperCase()} — ${roles[role].length}</span>`;
                 roles[role].map((entry) => {
                     userStore[entry.user.ID] = entry.user;
                     const popup = document.getElementById('userPopup');
-                    const cssActive = popup.getAttribute('data-user') === entry.user.ID && popup.getAttribute('openedBy') !== 'user' && !popup.getAttribute('openedBy').includes('_') ? 'true' : '';
+                    let cssActive = popup.getAttribute('data-user') === entry.user.ID && popup.getAttribute('openedBy') !== 'user' && !popup.getAttribute('openedBy').includes('_') ? 'true' : '';
+                    cssActive = document.getElementById('userCtx')['data-opener'] = `user_${entry.user.ID}`;
                     userContainer.innerHTML += `
-                    <div css-active="${cssActive}" class="user ${entry.online} exitable" id="${entry.user.ID}" onclick="openUserPopup('${entry.user.ID}', this)">
+                    <div css-active="${cssActive}" class="user ${entry.online} exitable" id="user_${entry.user.ID}" onclick="openUserPopup('${entry.user.ID}', this)" oncontextmenu="openUserContext(event, this)">
                     <img src="/resource/user/${entry.user.ID}?size=32"><div class="userStatus"></div><span>${entry.user.username}</span>
                     </div>`;
                 });
@@ -161,17 +161,20 @@ function message(data, scroll, previousMessage){
         createdAt: messageContainer.children[messageContainer.children.length - 1]?.children[0]?.getAttribute('data-time') ?? "0"
     }
     if (data.ID !== previousMessage.ID  && data.userID === previousMessage.userID && +previousMessage.createdAt + 300_000 > +data.createdAt) {
-        messageContainer.innerHTML += `<div class="message" id="${data.ID}" oncontextmenu="openMessageContext(event, this)">
+        const cssActive = document.getElementById('messageCtx')["data-messageID"] === `${data.ID}`;
+        messageContainer.innerHTML += `<div class="message" id="${data.ID}" oncontextmenu="openMessageContext(event, this)" css-active="${cssActive}">
         <div style="display:none;" data-user="${data.userID}" data-time="${data.createdAt}"></div><span class="messageTimeSentAside">${parseTimestamp(data.createdAt, 'clock')}</span>
         <div class="messageContainer"></div></div>`;
         document.getElementById(`${data.ID}`).children[2].innerHTML += `<pre>${formatContent(data.content, data)}</pre>`;
     } else {
         const popup = document.getElementById('userPopup');
-        const cssActive = popup.getAttribute('data-user') === data.userID && popup.getAttribute('openedBy') === `messageUsername_${data.ID}` || popup.getAttribute('openedBy') === `messageAvatar_${data.ID}` ? 'true' : '';
-        messageContainer.innerHTML += `<div class="message" id="${data.ID}" oncontextmenu="openMessageContext(event, this)">
+        const userCtx = document.getElementById('userCtx');
+        let cssActive = popup.getAttribute('data-user') === data.userID && popup.getAttribute('openedBy') === `messageUsername_${data.ID}` || popup.getAttribute('openedBy') === `messageAvatar_${data.ID}` ? 'true' : '';
+        cssActive = document.getElementById('messageCtx')["data-messageID"] === `${data.ID}` || userCtx["data-opener"] === `messageAvatar_${data.ID}` || userCtx["data-opener"] === `messageUsername_${data.ID}` ? 'true' : cssActive;
+        messageContainer.innerHTML += `<div class="message" id="${data.ID}" oncontextmenu="openMessageContext(event, this)" css-active="${cssActive}">
         <div style="display:none;" data-user="${data.userID}" data-time="${data.createdAt}"></div>
-        <img css-active="${cssActive}" id="messageAvatar_${data.ID}" class="messageAvatar" src="/resource/user/${data.userID}?size=32" onclick="openUserPopup('${data.userID}', this)" />
-        <div class="messageContainer"><span id="messageUsername_${data.ID}" class="messageUsername" onclick="openUserPopup('${data.userID}', this)">${userStore[data.userID]?.username ?? data.userID}</span>
+        <img oncontextmenu="openUserContext(event, this)" id="messageAvatar_${data.ID}" class="messageAvatar" src="/resource/user/${data.userID}?size=32" onclick="openUserPopup('${data.userID}', this)" />
+        <div class="messageContainer"><span oncontextmenu="openUserContext(event, this)" id="messageUsername_${data.ID}" class="messageUsername" onclick="openUserPopup('${data.userID}', this)">${userStore[data.userID]?.username ?? data.userID}</span>
         <span class="messageTimeSent">${parseTimestamp(data.createdAt)}</span></div></div>`;
         document.getElementById(`${data.ID}`).children[2].innerHTML += `<pre>${formatContent(data.content, data)}</pre>`;
     }
@@ -187,23 +190,10 @@ function formatContent(content, message) {
         if (m) {
             let id = m[0].substring(5,m[0].length-4);
             if (id === currentUser.ID) document.getElementById(`${message.ID}`).classList.add('mentions-you')
-            content = content.replace(new RegExp(m[0],"g"),`<span id="mention_${id}" class="mention" onclick="openUserPopup('${id}', this)" data-user="${id}">@${userStore[id].username}</span>`);
+            content = content.replace(new RegExp(m[0],"g"),`<span id="mention_${id}_${message.ID}" class="mention" oncontextmenu="openUserContext(event, this)" onclick="openUserPopup('${id}', this)" data-user="${id}">@${userStore[id].username}</span>`);
         }
     } while (m);
     return content;
-}
-
-function openMessageContext(event, element) {
-    const ctxMenu = document.getElementById("messageCtx");
-    if(ctxMenu["data-messageID"] === element.id){
-        ctxMenu.style = "";
-        ctxMenu["data-messageID"] = "";
-        return;
-    }
-    ctxMenu.style.display = "block";
-    ctxMenu.style.left = (event.pageX - 10)+"px";
-    ctxMenu.style.top = (event.pageY - 10)+"px";
-    ctxMenu["data-messageID"] = element.id;
 }
 
 const toast = document.getElementById("snackbar");
@@ -213,20 +203,10 @@ function showToast(msg, load, time){
     if(time !== undefined && time !== null) setTimeout(() => toast.className = toast.className.replace("show", ""), time * 1000);
     if(load !== undefined && load !== null && load !== false) toast.innerHTML = `<p>${msg}</p><div id="dot-spin" class="dot-spin"></div>`;
 }
+
 function hideToast(){
     toast.className = "";
 }
-
-document.onclick = (event) => {
-    const ctxMenu = document.getElementById("messageCtx");
-    ctxMenu.style = "";
-    ctxMenu["data-messageID"] = "";
-    closePopup(event.target);
-};
-
-document.oncontextmenu = (event) => {
-    event.preventDefault();
-};
 
 function onClose(){
     console.log("Closing connection.");
@@ -339,11 +319,10 @@ messageField.onkeydown = messageField.onkeyup = function(e){
     }
 }
 
-const leftContainer = document.getElementById("leftContainer");
-const rightContainer = document.getElementById("rightContainer");
-const leftToggle = document.getElementById("serverChannelListToggle");
-
 if (isMobile) {
+    const leftContainer = document.getElementById("leftContainer");
+    const rightContainer = document.getElementById("rightContainer");
+    const leftToggle = document.getElementById("serverChannelListToggle");
     document.body.style.minHeight = "100%";
     leftContainer.style = 'display: none; width: 100%; max-width: 100vw;';
     userContainer.style = 'display: none; width: 100%; min-width: 100%; max-width: 100vw;';
@@ -367,152 +346,29 @@ if (isMobile) {
 
 document.getElementById("userListToggle").addEventListener("click", () => {
     if (userContainer.style.display === "block" || !userContainer.style.display) {
-        if (isMobile) {
-            document.getElementById("messages").style.display = "flex";
-        }
+        if (isMobile) document.getElementById("messages").style.display = "flex";
         userContainer.style.display = "none";
     } else {
-        if (isMobile) {
-            document.getElementById("messages").style.display = "none";
-        }
+        if (isMobile) document.getElementById("messages").style.display = "none";
         userContainer.style.display = "block";
     }
 });
 
-function deleteMessage(){
-    const ctxMenu = document.getElementById("messageCtx");
-    if(ctxMenu["data-messageID"] === undefined || ctxMenu["data-messageID"] === "") return;
-    ws.send(JSON.stringify({
-        opCode: "DEL_MSG",
-        data: {
-            messageID: ctxMenu["data-messageID"]
-        }
-    }))
-}
-
-document.getElementById("logoutButton").onclick = () => location.href = "/logout";
-
-userProfile.onclick = () => openUserPopup(currentUser.ID, userProfile, true);
-
-window.onresize = () => {
-    closePopup();
+document.onclick = (event) => {
+    closeMessageContextMenu();
+    closeUserContextMenu();
+    closePopup(event.target);
 };
 
-function closePopup(element) {
-    const popup = document.getElementById(`userPopup`);
-    if (popup.style.display === 'none') return;
-    // element should only be excluded when window is resized
-    if (!element) {
-        popup.style.display = 'none';
-        document.querySelectorAll('[css-active="true"]').forEach((e) => e.setAttribute('css-active', 'false'));
-        return;
-    }
-    const ecl = element.classList;
-    const parent = element.parentElement.classList;
-    if (ecl.contains('mention') || ecl.toString().includes('message')) return;
-    if (ecl.contains('exitable') || parent.contains('exitable') || element.id.includes('userPopup') || ecl.toString().includes('userPopup') || parent.toString().includes('userPopup')) return;
-    document.querySelectorAll('[css-active="true"]').forEach((e) => e.setAttribute('css-active', 'false'));
-    popup.setAttribute('data-user', '');
-    popup.style.display = 'none';
-}
+document.oncontextmenu = (event) => {
+    event.preventDefault();
+};
 
-function openUserPopup(userID, element, editable) {
-    //clear user selection when popup is opened
-    if (window.getSelection) {
-        if (window.getSelection().empty) {  // Chrome
-            window.getSelection().empty();
-        } else if (window.getSelection().removeAllRanges) {  // Firefox
-            window.getSelection().removeAllRanges();
-        }
-    } else if (document.selection) {  // IE
-        document.selection.empty();
-    }
-    const user = userStore[userID];
-    if (!user) return console.error('Invalid User.');
-    const popup = document.getElementById(`userPopup`);
-    document.querySelectorAll('[css-active="true"]').forEach((e) => e.setAttribute('css-active', 'false'));
-    popup.setAttribute('data-user', '');
-    if (popup.style.display === "flex" && popup.getAttribute('openedBy') === element.id) return popup.style.display = 'none';
-    element.setAttribute('css-active', 'true');
-    popup.setAttribute('openedBy', element.id);
-    popup.setAttribute('data-user', userID);
-    const popupEditable = document.getElementById(`userPopupEditable`);
-    const popupNonEditable = document.getElementById(`userPopupNonEditable`);
-    const userStatus = document.getElementById(userID).classList.toString().replace('user ', '').replace(' exitable', '')
-
-    if (userID === currentUser.ID && editable) {
-        popupEditable.style.display = 'flex';
-        popupNonEditable.style.display = 'none';
-        const avatar = document.getElementById(`userPopupAvatarEditable`);
-        const banner = document.getElementById(`userPopupBannerEditable`);
-        const status = document.getElementById(`userPopupStatusEditable`);
-        const usernameInput = document.getElementById(`userPopupUsernameInput`);
-        const discriminatorInput = document.getElementById(`userPopupDiscriminatorInput`);
-        //const email = document.getElementById(`userPopupEmail`);
-        const oldPassword = document.getElementById(`userPopupOldPassword`);
-        const newPassword = document.getElementById(`userPopupNewPassword`);
-        const saveButton = document.getElementById(`saveProfile`);
-        status.classList.add(userStatus);
-        status.classList.remove(userStatus === 'ONLINE' ? 'OFFLINE' : 'ONLINE');
-        avatar.src = `/resource/user/${userID}?size=128`
-        avatar.addEventListener("click", () => {
-            showToast("Change PFP is a Work-In-Progress", false, 5);
-        });
-        banner.addEventListener("click", () => {
-            showToast("Change Banner is a Work-In-Progress", false, 5);
-        });
-        saveButton.addEventListener("click", () => {
-            const data = {};
-            if(usernameInput.value.length > 0) data["username"] = usernameInput.value;
-            if(discriminatorInput.value.length > 0) data["discriminator"] = discriminatorInput.value;
-            if(newPassword.value.length > 0){
-                if(oldPassword.value.length > 0){
-                    //Complain to user.
-                } else {
-                    data["oldPass"] = oldPassword.value;
-                    data["newPass"] = newPassword.value;
-                }
-            }
-            ws.send(JSON.stringify({ opCode: "UPD_PRF", data }));
-        });
-    } else {
-        popupEditable.style.display = 'none';
-        popupNonEditable.style.display = 'flex';
-        const avatar = document.getElementById(`userPopupAvatar`);
-        //const banner = document.getElementById(`userPopupBanner`);
-        const username = document.getElementById(`userPopupUsername`);
-        const discriminator = document.getElementById(`userPopupDiscriminator`);
-        const joined = document.getElementById(`userPopupJoined`);
-        const status = document.getElementById(`userPopupStatus`);
-        avatar.src = `/resource/user/${userID}?size=128`;
-        status.classList.add(userStatus);
-        status.classList.remove(userStatus === 'ONLINE' ? 'OFFLINE' : 'ONLINE');
-        username.innerHTML = user.username ?? "Nya";
-        discriminator.innerHTML = user.discriminator ?? "0000";
-        joined.innerHTML = parseTimestamp(user.createdAt);
-    }
-
-    popup.style = 'display: flex;';
-    const elementData = element.getBoundingClientRect();
-    let popupData = popup.getBoundingClientRect();
-    if (isMobile) return popup.style.inset = `${document.body.clientHeight / 2}px 10px 10px`;
-    if (element.id === 'user') {
-        //position popup above element if element is the current user profile
-        popup.style.bottom = document.body.clientHeight - elementData.top + 10 + 'px';
-        popupData = popup.getBoundingClientRect();
-        if (popupData.top < 0) popup.style.top = '10px';
-        popup.style.left = '10px';
-    } else {
-        //position popup to the right of element
-        popup.style.top = elementData.top + 'px';
-        popupData = popup.getBoundingClientRect();
-        if (popupData.bottom > document.body.clientHeight) popup.style.top = (elementData.top - (popupData.bottom - document.body.clientHeight)) - 10 + 'px';
-        popup.style.left = elementData.right + 10 + 'px';
-        //position popup to the left if popup was going to be off screen
-        popupData = popup.getBoundingClientRect();
-        if (popupData.right > document.body.clientWidth) popup.style.left = (elementData.left - popupData.width) - 10 + 'px';
-    }
-}
+window.onresize = () => {
+    closeMessageContextMenu();
+    closeUserContextMenu();
+    closePopup();
+};
 
 function moveChat(user) {
     if (!user) return messageContainer.scrollTop = messageContainer.scrollHeight;
@@ -520,4 +376,27 @@ function moveChat(user) {
     else if (messageContainer.scrollTop + messageContainer.clientHeight + 100 > messageContainer.scrollHeight) {
         messageContainer.scrollTop = messageContainer.scrollHeight;
     }
+}
+
+if (/firefox/i.test(navigator.userAgent)) {
+    messageField.style.scrollbarColor = 'var(--bg-0) var(--bg-5)';
+    messageField.style.scrollbarGutter = 'stable';
+    messageField.style.scrollbarWidth = 'thin';
+    document.getElementById('serverList').style.scrollbarWidth = 'none';
+    const channelsContainer = document.getElementById('channelsContainer');
+    channelsContainer.style.scrollbarColor = 'var(--bg-0) var(--bg-3)';
+    channelsContainer.style.scrollbarGutter = 'stable';
+    channelsContainer.style.scrollbarWidth = 'thin';
+    for (const element of document.getElementsByClassName('userPopupBottom')) {
+        element.style.scrollbarColor = 'var(--bg-1) var(--bg-0)';
+        element.style.scrollbarGutter = 'stable';
+        element.style.scrollbarWidth = 'thin';
+    }
+    messageContainer.style.scrollbarColor = 'var(--bg-1) var(--bg-4)';
+    messageContainer.style.scrollbarGutter = 'stable';
+    messageContainer.style.scrollbarWidth = 'thin';
+    userContainer.style.scrollbarColor = 'var(--bg-1) var(--bg-3)';
+    userContainer.style.scrollbarGutter = 'stable';
+    userContainer.style.scrollbarWidth = 'thin';
+    setTimeout(() => showToast('You may experience a degraded experience on Firefox', false, 5), 2000);
 }

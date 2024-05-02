@@ -7,13 +7,16 @@
     --bg-3: hsl(220, 7%, 18%);
     --bg-4: hsl(223, 7%, 21%);
     --bg-5: hsl(225, 7%, 24%);
-    --font-color-1: hsl(0, 0%, 100%);
-    --font-color-2: hsl(220, 13%, 95%);
-    --font-color-3: hsl(0, 0%, 70%);
-    --font-color-4: rgb(128, 132, 142);
+    --font-color-1: rgb(255, 255, 255);
+    --font-color-2: rgb(241, 242, 244);
+    --font-color-3: rgb(181, 186, 193);
+    --font-color-4: rgb(148, 155, 164);
+    --font-color-5: rgb(128, 132, 142);
 
     --user-online: hsl(145, 65%, 39%);
-    --user-offline: #80848e;
+    --user-offline: rgb(128, 132, 142);
+
+    --blurple: rgb(82, 90, 220);
 }
 
 * {
@@ -157,22 +160,59 @@ body {
     background: transparent;
 }
 
-menu {
+#messageCtx, #userCtx {
     position: absolute;
-    display: block;
-    left: 0px;
-    top: 0px;
-    padding: 0;
+    display: none;
+    padding: 6px 8px;
     margin: 0;
-    border: 1px solid;
-    white-space: nowrap;
-    background-color: #494949;
+    background-color: var(--bg-0);
+    border-radius: 4px;
+    list-style: none;
     z-index: 100;
+    width: 188px;
+    font-size: 14px;
+    font-weight: 500;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
 }
 
-menu:hover {
-    background-color: #7e7e7e;
+#messageCtx li, #userCtx li {
+    margin: 2px 0;
+    padding: 6px 8px;
+    color: var(--font-color-3);
+    display: flex;
+    border-radius: 2px;
+    align-items: center;
     cursor: pointer;
+}
+
+#messageCtx li:hover, #userCtx li:hover {
+    background: var(--blurple);
+    color: var(--font-color-2);
+}
+
+#messageCtx li.warning, #userCtx li.warning {
+    color: rgb(242, 63, 66);
+}
+
+#messageCtx li.warning:hover, #userCtx li.warning:hover {
+    background: rgb(242, 63, 66);
+    color: var(--font-color-2);
+}
+
+#messageCtx li span, #userCtx li span {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+#messageCtx li svg, #userCtx li svg {
+    margin-left: 8px;
+}
+
+#messageCtx div[role="separator"], #userCtx div[role="separator"] {
+    margin: 4px;
+    border-bottom: 1px solid rgba(78, 80, 88, 0.48);
 }
 
 .no-select {
@@ -290,7 +330,7 @@ pre {
     max-width: 72px;
     background-color: var(--bg-1);
     display: flex;
-    overflow-y: scroll;
+    overflow-y: auto;
     height: 100%;
     flex-grow: 1;
     flex-direction: column;
@@ -382,7 +422,8 @@ div:has(> #serverNameContainer) {
     flex-direction: column;
     flex-grow: 1;
     height: 1px;
-    overflow-y: scroll;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
     row-gap: 1px;
     padding: 10px 0 10px 8px;
 }
@@ -415,7 +456,7 @@ div:has(> #serverNameContainer) {
     padding: 6px 8px;
     display: flex;
     cursor: pointer;
-    color: var(--font-color-4);
+    color: var(--font-color-5);
     border-radius: 4px;
     font-weight: 500;
 }
@@ -431,7 +472,7 @@ div:has(> #serverNameContainer) {
 }
 
 .channel svg {
-    color: var(--font-color-4);
+    color: var(--font-color-5);
     margin-right: 6px;
 }
 
@@ -613,7 +654,7 @@ div:has(> #serverNameContainer) {
 }
 
 #rightNavChannelInfo {
-    color: var(--font-color-4);
+    color: var(--font-color-5);
     align-items: center;
     display: flex;
 }
@@ -658,7 +699,7 @@ div:has(> #serverNameContainer) {
     width: 100%;
     max-height: 100%;
     flex-grow: 1;
-    overflow-y: scroll;
+    overflow-y: auto;
     overflow-wrap: break-word;
     outline: none;
     padding-bottom: 24px;
@@ -672,7 +713,7 @@ div:has(> #serverNameContainer) {
     position: relative;
 }
 
-.message:has(>[css-active="true"]), .message:has(>div>[css-active="true"]) {
+.message[css-active="true"], .message:has(>[css-active="true"]), .message:has(>div>[css-active="true"]) {
     background-color: rgba(2, 2, 2, 0.06);
 }
 
@@ -811,7 +852,7 @@ div:has(> #serverNameContainer) {
     pointer-events: none;
     background: transparent;
     bottom: 0;
-    color: var(--font-color-4);
+    color: var(--font-color-5);
     z-index: 0;
     user-select: none;
 }
@@ -824,7 +865,8 @@ div:has(> #serverNameContainer) {
     background-color: var(--bg-3);
     display: flex;
     flex-direction: column;
-    overflow-y: scroll;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
     row-gap: 1px;
     outline: none;
 }
@@ -855,7 +897,7 @@ div:has(> #serverNameContainer) {
 #userList>span {
     font-size: 12px;
     font-weight: 600;
-    color: var(--font-color-2);
+    color: var(--font-color-4);
     padding-left: 4px;
     user-select: none;
 }
@@ -868,12 +910,14 @@ div:has(> #serverNameContainer) {
     user-select: none;
     padding: 4px;
     border-radius: 4px;
+    color: var(--font-color-3);
 }
 
 .user:hover, .user[css-active="true"] {
     background-color: var(--bg-5);
     cursor: pointer;
     opacity: 1 !important;
+    color: var(--font-color-2);
 }
 
 .user img {
