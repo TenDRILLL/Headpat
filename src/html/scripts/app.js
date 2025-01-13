@@ -1054,3 +1054,9 @@ leaveButton.onclick = (e)=>{
     e.preventDefault();
     leave();
 }
+
+document.getElementById("channelCreateButton").onclick = (e) => {
+    e.preventDefault();
+
+    console.log("CHANNEL CREATION: WIP, NOT IMPLEMENTED YET");
+}
