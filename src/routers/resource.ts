@@ -8,6 +8,10 @@ resourceRouter.get("/user/:userId/:asset", async (req, res)=>{
     if(req.params.userId === undefined || req.params.asset === undefined){
         return res.status(400);
     }
+
+    const rex = /[a-z0-9-]/gi;
+    if(!rex.test(req.params.userId) || !rex.test(req.params.asset)) return res.status(400);
+
     if(req.query.size && !["32", "64", "128", "256", "512"].includes(req.query.size as string)) req.query.size = "128";
     const file = `${req.params.userId[0]}/${req.params.userId}-${req.params.asset}${req.query.size === undefined ? "":`-${req.query.size}`}.png`;
     const path = `${__dirname}/../${process.env.MEMBER_ASSET_LOCATION}/`;
