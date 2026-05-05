@@ -25,7 +25,7 @@
   "dependencies": {
     "@keyv/sqlite": "^3.6.7",
     "bcrypt": "^5.1.1",
-    "cookie-parser": "^1.4.6",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^16.4.1",
     "ejs": "^3.1.10",
     "express": "^4.22.1",
