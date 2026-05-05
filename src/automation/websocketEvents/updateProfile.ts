@@ -38,8 +38,12 @@ export default class UpdateProfile extends WebsocketEvent {
                     const save: Promise<boolean>[] = [];
                     sizes.forEach(size => {
                         save.push(new Promise(async (res) => {
-                            img.resize(size, size);
-                            await img.writeAsync(`${__dirname}/../../${process.env.MEMBER_ASSET_LOCATION}/${user.ID[0]}/${user.ID}-avatar-${size}.png`);
+                            // clone() per iteration: the Jimp instance is mutated
+                            // by resize(), so a shared `img` would cascade prior
+                            // resizes into later ones AND race across these
+                            // concurrent promises.
+                            const sized = img.clone().resize(size, size);
+                            await sized.writeAsync(`${__dirname}/../../${process.env.MEMBER_ASSET_LOCATION}/${user.ID[0]}/${user.ID}-avatar-${size}.png`);
                             res(true);
                         }));
                     });
